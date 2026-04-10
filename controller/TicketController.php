@@ -1,12 +1,11 @@
 <?php
 class TicketController {
 
-    /** POST /index.php?action=ticket.store  — Crear ticket (rol 1, 2, 3) */
+    /** POST ?action=ticket.store — Crear ticket (rol 1, 2, 3) */
     public function store(): void {
         $this->requireJson();
         $usuario = $_SESSION['usuario'];
 
-        // Solo roles 1, 2 y 3 pueden crear tickets
         if (!in_array($usuario['rol_id'], [1, 2, 3])) {
             $this->jsonError('Sin permisos.', 403);
         }
@@ -36,7 +35,7 @@ class TicketController {
             'horario_id'  => (int) $body['horario_id'],
             'tecnico_id'  => (int) $body['tecnico_id'],
             'cliente'     => $body['cliente'],
-            'colonia'     => $body['colonia'],
+            'colonia'     => $body['colonia'] ?? '',
             'ticket_num'  => $body['ticket_num'],
             'descripcion' => $body['descripcion'],
             'telefono'    => $body['telefono'],
@@ -45,10 +44,10 @@ class TicketController {
         $this->jsonSuccess(['ticket_id' => $id, 'rol_id' => $usuario['rol_id']]);
     }
 
-    /** GET /index.php?action=ticket.show&id=X  — Ver ticket */
+    /** GET ?action=ticket.show&id=X — Ver ticket + llamadas */
     public function show(): void {
-        $id    = (int) ($_GET['id'] ?? 0);
-        $model = new TicketModel();
+        $id     = (int) ($_GET['id'] ?? 0);
+        $model  = new TicketModel();
         $ticket = $model->findById($id);
 
         if (!$ticket) {
@@ -56,18 +55,22 @@ class TicketController {
         }
 
         $usuario = $_SESSION['usuario'];
-        $ticket['can_edit'] = ($usuario['rol_id'] === 3);
+        $ticket['can_edit'] = in_array($usuario['rol_id'], [3, 4]);
+
+        // Cargar llamadas
+        $llamadaModel   = new LlamadaModel();
+        $ticket['llamadas'] = $llamadaModel->getByTicket($id);
 
         $this->jsonSuccess($ticket);
     }
 
-    /** PUT /index.php?action=ticket.update  — Editar ticket (solo rol 3) */
+    /** POST ?action=ticket.update — Editar ticket (rol 3 y 4) */
     public function update(): void {
         $this->requireJson();
         $usuario = $_SESSION['usuario'];
 
-        if ($usuario['rol_id'] !== 3) {
-            $this->jsonError('Solo el Supervisor CC puede editar tickets.', 403);
+        if (!in_array($usuario['rol_id'], [3, 4])) {
+            $this->jsonError('Sin permisos para editar tickets.', 403);
         }
 
         $body = $this->jsonBody();
@@ -93,7 +96,7 @@ class TicketController {
 
         $model->update($id, [
             'cliente'     => $body['cliente'],
-            'colonia'     => $body['colonia'],
+            'colonia'     => $body['colonia'] ?? '',
             'ticket_num'  => $body['ticket_num'],
             'descripcion' => $body['descripcion'],
             'telefono'    => $body['telefono'],
@@ -104,14 +107,49 @@ class TicketController {
         $this->jsonSuccess(['updated' => true]);
     }
 
-    /* ── Helpers ─────────────────────────────────────────────────────────── */
+    /** POST ?action=llamada.upsert — Guardar/actualizar una llamada */
+    public function upsertLlamada(): void {
+        $this->requireJson();
+        $usuario = $_SESSION['usuario'];
+
+        // Todos los roles con acceso al sistema pueden registrar llamadas
+        if (!in_array($usuario['rol_id'], [1, 2, 3, 4])) {
+            $this->jsonError('Sin permisos.', 403);
+        }
+
+        $body      = $this->jsonBody();
+        $ticketId  = (int) ($body['ticket_id']  ?? 0);
+        $noLlamada = (int) ($body['no_llamada']  ?? 0);
+
+        if (!$ticketId || $noLlamada < 1 || $noLlamada > 3) {
+            $this->jsonError('Datos inválidos.', 422);
+        }
+
+        // Verificar que el ticket exista
+        $ticketModel = new TicketModel();
+        if (!$ticketModel->findById($ticketId)) {
+            $this->jsonError('Ticket no encontrado.', 404);
+        }
+
+        $llamadaModel = new LlamadaModel();
+        $llamadaModel->upsert(
+            $ticketId,
+            $noLlamada,
+            trim($body['respuesta_tecnico'] ?? ''),
+            trim($body['respuesta_cliente'] ?? '')
+        );
+
+        $this->jsonSuccess(['saved' => true]);
+    }
+
+    /* ── Helpers ──────────────────────────────────────────────────── */
 
     private function requireJson(): void {
         header('Content-Type: application/json; charset=utf-8');
     }
 
     private function jsonBody(): array {
-        $raw = file_get_contents('php://input');
+        $raw  = file_get_contents('php://input');
         $data = json_decode($raw, true);
         return is_array($data) ? $data : [];
     }

@@ -234,7 +234,7 @@ const pwToggle = document.getElementById('pwToggle');
 pwToggle.addEventListener('click', () => {
     const isPassword = pwInput.type === 'password';
     pwInput.type     = isPassword ? 'text' : 'password';
-    pwToggle.textContent = isPassword ? '🙈' : '👁';
+    pwToggle.textContent = isPassword ? '︶' : '👁';
     pwToggle.setAttribute('aria-label', isPassword ? 'Ocultar contraseña' : 'Mostrar contraseña');
 });
 
