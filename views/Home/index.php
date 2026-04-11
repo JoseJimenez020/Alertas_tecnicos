@@ -40,8 +40,8 @@
         .dropdown-menu a,
         .dropdown-menu button.menu-btn {
             display: block; width: 100%; box-sizing: border-box;
-            padding: 8px 14px; text-align: left;
-            font-size: 12px; text-decoration: none; color: #222;
+            padding: 8px 14px; text-align: left; font-size: 12px;
+            text-decoration: none; color: #222;
             background: none; border: none; cursor: pointer;
             border-bottom: 1px solid #eee;
         }
@@ -71,28 +71,21 @@
             padding: 0; cursor: pointer; border: none; flex-shrink: 0;
         }
 
-        /* ── Celdas del tablero ─────────────────────────────────── */
+        /* ── Tabla ──────────────────────────────────────────────── */
         td.cell-ticket { cursor: pointer; position: relative; }
         td.cell-ticket:hover { background: #f0f7ff; }
         td.cell-ticket.occupied { cursor: pointer; }
         .icon-wrap { display: flex; align-items: center; justify-content: center; height: 100%; }
 
-        /* Columna de técnico no disponible */
-        th.col-nodisponible {
-            background-color: #156082 !important;
-            color: #fff !important;
-        }
+        th.col-nodisponible { background-color: #156082 !important; color: #fff !important; }
         .badge-nodisponible {
             display: block; font-size: 8px; background: rgba(255,255,255,.22);
             padding: 1px 3px; border-radius: 6px; margin-top: 2px; line-height: 1.3;
         }
-        td.cell-nodisponible {
-            background-color: #156082 !important;
-            cursor: default !important;
-        }
+        td.cell-nodisponible { background-color: #156082 !important; cursor: default !important; }
         td.cell-nodisponible:hover { background-color: #156082 !important; }
 
-        /* ── Modal base ─────────────────────────────────────────── */
+        /* ── Modal ──────────────────────────────────────────────── */
         .modal-overlay {
             display: none; position: fixed; inset: 0;
             background: rgba(0,0,0,.45); z-index: 1000;
@@ -110,10 +103,7 @@
             position: sticky; top: 0; z-index: 1;
         }
         .modal-header h3 { margin: 0; font-size: 14px; }
-        .modal-close {
-            background: none; border: none; color: #fff;
-            font-size: 20px; cursor: pointer; line-height: 1;
-        }
+        .modal-close { background: none; border: none; color: #fff; font-size: 20px; cursor: pointer; line-height: 1; }
         .modal-body { padding: 18px; }
         .modal-body label {
             display: block; font-size: 11px; color: #555;
@@ -129,7 +119,7 @@
         .modal-body select[disabled] { background: #f5f5f5; color: #444; }
         .modal-footer {
             padding: 12px 18px; background: #f5f5f5;
-            display: flex; justify-content: flex-end; gap: 8px;
+            display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap;
             position: sticky; bottom: 0;
         }
         .btn { padding: 7px 18px; border: none; cursor: pointer; font-size: 12px; }
@@ -141,6 +131,9 @@
         .btn-warning:hover { background: #cc7000; }
         .btn-danger    { background: #c0392b; color: #fff; }
         .btn-danger:hover { background: #a93226; }
+        .btn-reschedule { background: #6f42c1; color: #fff; }
+        .btn-reschedule:hover { background: #5a32a3; }
+        .btn-reschedule:disabled { background: #b39ddb; cursor: not-allowed; }
 
         .modal-meta {
             font-size: 11px; color: #1a4d6d; background: #e8f1f8;
@@ -149,6 +142,18 @@
         .feedback { font-size: 11px; padding: 6px 10px; margin-bottom: 8px; display: none; }
         .feedback.success { background: #d4edda; color: #155724; display: block; }
         .feedback.error   { background: #f8d7da; color: #721c24; display: block; }
+        .feedback.info    { background: #e8f1f8; color: #1a4d6d; display: block; }
+
+        /* Caja de reagendado confirmado */
+        #rescheduleResult {
+            display: none;
+            background: #f0f7ff; border: 1px solid #1a4d6d; border-radius: 3px;
+            padding: 10px 12px; margin-top: 10px; font-size: 12px;
+        }
+        #rescheduleResult strong { color: #1a4d6d; }
+        #rescheduleResult .new-slot {
+            font-size: 14px; font-weight: bold; color: #1a4d6d; margin-top: 4px;
+        }
 
         /* ── Llamadas ───────────────────────────────────────────── */
         .llamadas-section { margin-top: 16px; border-top: 2px solid #1a4d6d; padding-top: 12px; }
@@ -177,8 +182,7 @@
         }
         .motivo-tag { font-size: 9px; color: #c0392b; margin-left: 4px; white-space: nowrap; }
         .btn-tecnico-status {
-            display: none;
-            margin-left: 6px; background: none; border: none;
+            display: none; margin-left: 6px; background: none; border: none;
             cursor: pointer; font-size: 11px; padding: 1px 3px;
             line-height: 1; color: #1a4d6d; flex-shrink: 0;
         }
@@ -202,7 +206,6 @@ if (empty($allTecs)) {
     foreach ($tecnicosGroup as $lista) foreach ($lista as $t) $allTecs[] = $t;
 }
 
-// Ordenar técnicos por zonaOrder
 $tecnicosSorted = [];
 foreach ($zonaOrder as $z) {
     foreach ($allTecs as $t) {
@@ -218,14 +221,12 @@ foreach ($tecnicosSorted as $t) {
 }
 $tecnicosSorted = $tmp;
 
-// Colspan por zona
 $zonaSpans = [];
 foreach ($tecnicosSorted as $t) {
     $z = $t['zona_nombre'] ?? 'Sin zona';
     $zonaSpans[$z] = ($zonaSpans[$z] ?? 0) + 1;
 }
 
-// Agrupar todos los técnicos por zona para lista inferior
 $allTecsByZona = [];
 foreach ($allTecs as $t) {
     $allTecsByZona[$t['zona_nombre'] ?? 'Sin zona'][] = $t;
@@ -234,7 +235,7 @@ foreach ($allTecs as $t) {
 $rolId        = (int) $usuario['rol_id'];
 $canCreate    = in_array($rolId, [1, 2, 3]);
 $rolesNombres = ['','Call Center','Mesa de Control','Supervisor CC','Administrador'];
-$fechaHoy     = date('Y-m-d'); // Fecha del servidor — zona horaria correcta
+$fechaHoy     = date('Y-m-d');
 ?>
 <div class="container">
 
@@ -242,12 +243,10 @@ $fechaHoy     = date('Y-m-d'); // Fecha del servidor — zona horaria correcta
     <div class="topbar">
         <h1>Incidentes de Clientes Residenciales</h1>
         <div class="topbar-right">
-
             <span>👤 <?= htmlspecialchars($usuario['nombre']) ?>
                 (<?= $rolesNombres[$rolId] ?? 'Rol '.$rolId ?>)
             </span>
 
-            <!-- Selector de fecha -->
             <form method="GET" action="">
                 <input type="hidden" name="action" value="tablero">
                 <input type="date" name="fecha" value="<?= htmlspecialchars($fecha) ?>"
@@ -255,19 +254,15 @@ $fechaHoy     = date('Y-m-d'); // Fecha del servidor — zona horaria correcta
                 <button type="submit" class="btn btn-primary" style="padding:5px 10px;">Ver</button>
             </form>
 
-            <!-- Menú desplegable -->
             <div class="dropdown" id="menuDropdown">
                 <button class="dropdown-toggle" onclick="toggleMenu(event)">☰ Menú</button>
                 <div class="dropdown-menu" id="dropdownMenu">
-
                     <div class="menu-section">Tablero</div>
                     <a href="?action=tablero">📋 Tablero de hoy</a>
 
                     <?php if (in_array($rolId, [2, 4])): ?>
                     <div class="menu-section">Gestión</div>
                     <a href="?action=horarios.panel">🕐 Gestión de Horarios</a>
-                    <?php endif; ?>
-                    <?php if ($rolId === 2 || $rolId === 4): ?>
                     <a href="?action=tecnicos.panel">⚙ Gestión de Técnicos</a>
                     <?php endif; ?>
                     <?php if ($rolId === 4): ?>
@@ -280,7 +275,6 @@ $fechaHoy     = date('Y-m-d'); // Fecha del servidor — zona horaria correcta
                     </button>
                 </div>
             </div>
-
             <form id="frmLogout" method="GET" action="" style="display:none;">
                 <input type="hidden" name="action" value="logout">
             </form>
@@ -292,14 +286,11 @@ $fechaHoy     = date('Y-m-d'); // Fecha del servidor — zona horaria correcta
         </div>
     </div>
 
-    <!-- Banner de notificaciones -->
     <div id="bannerNotif">
         <span class="banner-text">
             🔔 Activa las notificaciones para recibir avisos 30 minutos antes de cada ticket asignado.
         </span>
-        <button class="btn-activar" onclick="pedirPermisoNotificaciones()">
-            🔔 Activar notificaciones
-        </button>
+        <button class="btn-activar" onclick="pedirPermisoNotificaciones()">🔔 Activar notificaciones</button>
         <button class="btn-dismiss"
                 onclick="document.getElementById('bannerNotif').style.display='none'"
                 title="Cerrar">×</button>
@@ -416,7 +407,7 @@ $fechaHoy     = date('Y-m-d'); // Fecha del servidor — zona horaria correcta
             <?php
             $usuarioModel2 = new UsuarioModel();
             $todosUs   = $usuarioModel2->getAll();
-            $ccUsers = array_filter($todosUs, fn($u) => $u['rol_id'] == 1 || $u['rol_id'] == 3);
+            $ccUsers   = array_filter($todosUs, fn($u) => $u['rol_id'] == 1 || $u['rol_id'] == 3);
             $mesaUsers = array_filter($todosUs, fn($u) => $u['rol_id'] == 2);
             foreach ($ccUsers as $u): ?>
             <div class="list-item <?= htmlspecialchars($u['color']) ?>">
@@ -443,10 +434,12 @@ $fechaHoy     = date('Y-m-d'); // Fecha del servidor — zona horaria correcta
         <div class="modal-body">
             <div class="modal-meta" id="modalMeta"></div>
             <div class="feedback" id="modalFeedback"></div>
+
             <input type="hidden" id="fTicketId">
             <input type="hidden" id="fFecha">
             <input type="hidden" id="fHorarioId">
             <input type="hidden" id="fTecnicoId">
+
             <label>Nombre del Cliente</label>
             <input type="text" id="fCliente" maxlength="255" placeholder="Nombre completo">
             <label>Colonia</label>
@@ -458,6 +451,13 @@ $fechaHoy     = date('Y-m-d'); // Fecha del servidor — zona horaria correcta
             <label>Teléfono de Contacto (10 dígitos)</label>
             <input type="tel" id="fTelefono" maxlength="10" placeholder="9931234567">
 
+            <!-- Resultado de reagendado — visible solo tras usar el botón -->
+            <div id="rescheduleResult">
+                <strong>✅ Ticket reagendado para:</strong>
+                <div class="new-slot" id="rescheduleSlot"></div>
+            </div>
+
+            <!-- Llamadas (solo en modo ver/editar) -->
             <div class="llamadas-section" id="llamadasSection" style="display:none;">
                 <h4>📞 Registro de Llamadas</h4>
                 <?php for ($n = 1; $n <= 3; $n++): ?>
@@ -466,11 +466,13 @@ $fechaHoy     = date('Y-m-d'); // Fecha del servidor — zona horaria correcta
                     <div class="llamada-fields">
                         <div>
                             <label>Respuesta del Técnico</label>
-                            <textarea id="lTecnico<?= $n ?>" maxlength="255" placeholder="Respuesta del técnico..."></textarea>
+                            <textarea id="lTecnico<?= $n ?>" maxlength="255"
+                                      placeholder="Respuesta del técnico..."></textarea>
                         </div>
                         <div>
                             <label>Respuesta del Cliente</label>
-                            <textarea id="lCliente<?= $n ?>" maxlength="255" placeholder="Respuesta del cliente..."></textarea>
+                            <textarea id="lCliente<?= $n ?>" maxlength="255"
+                                      placeholder="Respuesta del cliente..."></textarea>
                         </div>
                     </div>
                     <button class="btn-save-llamada" onclick="saveLlamada(<?= $n ?>)">
@@ -511,22 +513,21 @@ $fechaHoy     = date('Y-m-d'); // Fecha del servidor — zona horaria correcta
 </div>
 
 <script>
-const ROL_ID        = <?= (int) $rolId ?>;
-const BASE_URL      = '<?= BASE_URL ?>';
-const FECHA_TABLERO = '<?= htmlspecialchars($fecha) ?>';
-// Fecha de HOY según el servidor PHP (zona horaria configurada en php.ini)
+const ROL_ID             = <?= (int) $rolId ?>;
+const BASE_URL           = '<?= BASE_URL ?>';
 const FECHA_HOY_SERVIDOR = '<?= $fechaHoy ?>';
+const FECHA_TABLERO      = '<?= htmlspecialchars($fecha) ?>';
 
-/* ── Menú desplegable ─────────────────────────────────────── */
+/* ── Menú ───────────────────────────────────────────────────── */
 function toggleMenu(e) {
     e.stopPropagation();
     document.getElementById('dropdownMenu').classList.toggle('open');
 }
-document.addEventListener('click', function() {
+document.addEventListener('click', () => {
     document.getElementById('dropdownMenu').classList.remove('open');
 });
 
-/* ── Botón lápiz: solo rol 2 ────────────────────────────────── */
+/* ── Lápiz técnico (rol 2) ──────────────────────────────────── */
 if (ROL_ID === 2) {
     document.querySelectorAll('.btn-tecnico-status')
             .forEach(b => b.style.display = 'inline-block');
@@ -543,37 +544,6 @@ function handleCellClick(cell) {
     else if (canCreate) openCreateMode(cell);
 }
 
-async function verificarAlertasServidor() {
-    try {
-        const response = await fetch('<?= BASE_URL ?>?action=notif.tickets');
-        if (!response.ok) return;
-        
-        const jsonResponse = await response.json();
-        
-        // CAMBIO AQUÍ: Validamos 'jsonResponse.tickets' en lugar de 'data'
-        if (jsonResponse.success && Array.isArray(jsonResponse.tickets)) {
-            
-            const tickets = jsonResponse.tickets; // Usamos la clave correcta
-            const horaActual = horaLocalActual();
-            const fechaHoy   = fechaLocalActual();
-
-            tickets.forEach(t => {
-                if (t.hora_alerta !== horaActual) return;
-
-                const key = `ticket-${t.ticket_id}-${fechaHoy}`;
-                if (alertaYaFired(key)) return;
-
-                marcarAlertaFired(key);
-                emitirNotificacion(t.tecnico_nombre, t.hora, key);
-            });
-        } else {
-            console.error('La respuesta del servidor no tiene el formato esperado:', jsonResponse);
-        }
-    } catch (error) {
-        console.error('Error al obtener notificaciones en segundo plano:', error);
-    }
-}
-
 function openCreateMode(cell) {
     resetModal();
     document.getElementById('modalTitle').textContent = 'Registrar Ticket';
@@ -583,6 +553,7 @@ function openCreateMode(cell) {
     document.getElementById('fHorarioId').value = cell.dataset.horarioId;
     document.getElementById('fTecnicoId').value = cell.dataset.tecnicoId;
     document.getElementById('llamadasSection').style.display = 'none';
+    document.getElementById('rescheduleResult').style.display = 'none';
     setFieldsReadonly(false);
     document.getElementById('modalFooter').innerHTML = `
         <button class="btn btn-secondary" onclick="closeModal('modalOverlay')">Cancelar</button>
@@ -595,6 +566,7 @@ async function openViewMode(ticketId) {
     resetModal();
     document.getElementById('modalTitle').textContent = 'Detalle del Ticket';
     setFieldsReadonly(true);
+
     const res  = await fetch(`${BASE_URL}?action=ticket.show&id=${ticketId}`);
     const json = await res.json();
     if (!json.success) {
@@ -602,6 +574,7 @@ async function openViewMode(ticketId) {
         openModal('modalOverlay'); return;
     }
     const t = json.data;
+
     document.getElementById('modalMeta').textContent =
         `Ticket #${t.ticket_id} | Registrado por: ${t.agente_nombre}`;
     document.getElementById('fTicketId').value    = t.ticket_id;
@@ -614,6 +587,9 @@ async function openViewMode(ticketId) {
     document.getElementById('fDescripcion').value = t.Descripcion;
     document.getElementById('fTelefono').value    = t.Telefono;
 
+    document.getElementById('rescheduleResult').style.display = 'none';
+
+    // Cargar llamadas
     document.getElementById('llamadasSection').style.display = 'block';
     for (let n = 1; n <= 3; n++) {
         const ll = (t.llamadas && t.llamadas[n]) || {};
@@ -629,8 +605,15 @@ async function openViewMode(ticketId) {
             status.textContent = '';
         }
     }
+
+    // Footer: Cerrar + Reagendar (siempre) + Editar (si tiene permiso)
     let footer = `<button class="btn btn-secondary" onclick="closeModal('modalOverlay')">Cerrar</button>`;
-    if (t.can_edit) footer += `<button class="btn btn-warning" onclick="enableEdit()">Editar</button>`;
+    footer += `<button class="btn btn-reschedule" id="btnReagendar" onclick="reagendarTicket()">
+                   🔄 Reagendar
+               </button>`;
+    if (t.can_edit) {
+        footer += `<button class="btn btn-warning" onclick="enableEdit()">Editar</button>`;
+    }
     document.getElementById('modalFooter').innerHTML = footer;
     openModal('modalOverlay');
 }
@@ -642,6 +625,52 @@ function enableEdit() {
         <button class="btn btn-secondary" onclick="closeModal('modalOverlay')">Cancelar</button>
         <button class="btn btn-primary"   onclick="updateTicket()">Guardar Cambios</button>
     `;
+}
+
+/* ── Reagendar ticket ────────────────────────────────────────── */
+async function reagendarTicket() {
+    const ticketId = parseInt(document.getElementById('fTicketId').value);
+    if (!ticketId) return;
+
+    const btn = document.getElementById('btnReagendar');
+    btn.disabled    = true;
+    btn.textContent = '⏳ Buscando...';
+
+    const res  = await fetch(`${BASE_URL}?action=ticket.reschedule`, {
+        method : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body   : JSON.stringify({ ticket_id: ticketId }),
+    });
+    const json = await res.json();
+
+    btn.disabled    = false;
+    btn.textContent = '🔄 Reagendar';
+
+    if (json.success) {
+        const d = json.data;
+        // Actualizar campos ocultos con el nuevo slot
+        document.getElementById('fFecha').value     = d.nueva_fecha;
+        document.getElementById('fHorarioId').value = d.nuevo_horario_id;
+
+        // Mostrar confirmación visual
+        document.getElementById('rescheduleSlot').textContent =
+            `${d.nueva_fecha_fmt} a las ${d.nueva_hora} hrs`;
+        document.getElementById('rescheduleResult').style.display = 'block';
+
+        // Actualizar el meta del modal
+        const metaEl = document.getElementById('modalMeta');
+        const metaBase = metaEl.textContent.split('|')[0].trim();
+        metaEl.textContent = `${metaBase} | 📅 Reagendado: ${d.nueva_fecha_fmt} ${d.nueva_hora}`;
+
+        // Ocultar el botón de reagendar una vez usado (ya reagendado)
+        btn.style.display = 'none';
+
+        // El tablero se recarga al cerrar para reflejar el cambio
+        document.getElementById('modalOverlay')
+            .addEventListener('click', () => location.reload(), { once: true });
+    } else {
+        showFeedback(json.message || 'No se pudo reagendar.', 'error');
+    }
 }
 
 async function saveTicket() {
@@ -724,6 +753,7 @@ function resetModal() {
         document.getElementById(`lStatus${n}`).textContent = '';
         document.getElementById(`llamadaBloque${n}`).classList.remove('llamada-guardada');
     }
+    document.getElementById('rescheduleResult').style.display = 'none';
     const fb = document.getElementById('modalFeedback');
     fb.className = 'feedback'; fb.textContent = '';
 }
@@ -732,9 +762,7 @@ function showFeedback(msg, type) {
     el.textContent = msg; el.className = 'feedback ' + type;
 }
 
-/* ══════════════════════════════════════════════════════════════
-   MODAL DISPONIBILIDAD TÉCNICO
-══════════════════════════════════════════════════════════════ */
+/* ── Modal técnico ──────────────────────────────────────────── */
 function openEditTecnicoModal(btn) {
     document.getElementById('tTecnicoId').value           = btn.dataset.tecnicoId;
     document.getElementById('tTecnicoNombre').textContent = btn.dataset.tecnicoNombre;
@@ -758,7 +786,6 @@ async function saveTecnicoStatus() {
     } else { fb.textContent = json.message || 'Error'; fb.className = 'feedback error'; }
 }
 
-/* ── Helpers de modales ────────────────────────────────────── */
 function openModal(id)  { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 function formatDate(str) {
@@ -773,81 +800,24 @@ function formatDate(str) {
 });
 
 /* ══════════════════════════════════════════════════════════════
-   SISTEMA DE ALERTAS DE ESCRITORIO — versión robusta
-   ──────────────────────────────────────────────────────────────
-   Diseño:
-   1. NO se solicita permiso automáticamente. El banner amarillo
-      muestra un botón explícito. Si ya fue concedido antes, el
-      banner no aparece y las alertas arrancan directamente.
-
-   2. Usa POLLING al endpoint ?action=notif.tickets cada 60 s.
-      El endpoint consulta la BD en tiempo real, así los tickets
-      nuevos registrados después de cargar la página también
-      generan alertas. Esto es más confiable que depender de
-      datos cargados en el HTML inicial.
-
-   3. La verificación compara la hora LOCAL del navegador
-      (hh:mm) con la hora_alerta de cada ticket. Para evitar
-      perderse la ventana de 1 minuto, se verifica en los
-      segundos 0-59 del minuto con un intervalo de 30 segundos
-      (2 verificaciones por minuto).
-
-   4. Cada alerta tiene una clave única por ticket + fecha.
-      Se guarda en sessionStorage para persistir entre
-      revisiones dentro de la misma sesión.
-
-   5. Solo dispara alertas si FECHA_TABLERO === FECHA_HOY_SERVIDOR
-      (ambos vienen de PHP), evitando alertas al ver días pasados.
-
-   Texto de la notificación (según especificación):
-   - Título: "⚠ Precaución!"
-   - Cuerpo: "El ticket asignado a <TecnicoNombre> está a punto de expirar."
+   ALERTAS DE ESCRITORIO (polling)
 ══════════════════════════════════════════════════════════════ */
-
-// Claves de alertas ya disparadas — usa sessionStorage para
-// sobrevivir a revisiones del setInterval sin duplicarse.
-function alertaYaFired(key) {
-    return sessionStorage.getItem('alerta_' + key) === '1';
-}
-function marcarAlertaFired(key) {
-    sessionStorage.setItem('alerta_' + key, '1');
-}
-
-// Hora local del cliente en formato "HH:MM"
+function alertaYaFired(key) { return sessionStorage.getItem('alerta_' + key) === '1'; }
+function marcarAlertaFired(key) { sessionStorage.setItem('alerta_' + key, '1'); }
 function horaLocalActual() {
-    const ahora = new Date();
-    return String(ahora.getHours()).padStart(2,'0') + ':' + String(ahora.getMinutes()).padStart(2,'0');
+    const a = new Date();
+    return String(a.getHours()).padStart(2,'0') + ':' + String(a.getMinutes()).padStart(2,'0');
 }
-
-// Fecha local del cliente en formato "YYYY-MM-DD"
 function fechaLocalActual() {
-    const hoy = new Date();
-    return hoy.getFullYear()
-        + '-' + String(hoy.getMonth()+1).padStart(2,'0')
-        + '-' + String(hoy.getDate()).padStart(2,'0');
+    const h = new Date();
+    return h.getFullYear() + '-' + String(h.getMonth()+1).padStart(2,'0') + '-' + String(h.getDate()).padStart(2,'0');
 }
 
-// Emitir notificación del navegador
-function emitirNotificacion(tecnicoNombre, hora, key) {
-    const notif = new Notification('⚠ Precaución!', {
-        body : `El ticket asignado a ${tecnicoNombre} está a punto de expirar.`,
-        icon : `${BASE_URL}public/icon.png`,
-        tag  : key,           // evita duplicados en el notification center del SO
-        requireInteraction: true,  // no desaparece sola hasta que el usuario la cierra
-    });
-    notif.onclick = () => { window.focus(); notif.close(); };
-}
-
-// Verificar tickets contra la hora actual y disparar alertas
 async function verificarAlertas() {
     if (Notification.permission !== 'granted') return;
-
-    // Solo alertar si el tablero muestra HOY
     if (FECHA_TABLERO !== FECHA_HOY_SERVIDOR) return;
-    // Doble check: comparar también con la fecha local del cliente
     if (FECHA_HOY_SERVIDOR !== fechaLocalActual()) return;
 
-    // Obtener tickets en tiempo real del servidor
     let tickets;
     try {
         const res = await fetch(`${BASE_URL}?action=notif.tickets`, { cache: 'no-store' });
@@ -855,58 +825,45 @@ async function verificarAlertas() {
         const json = await res.json();
         if (!json.success) return;
         tickets = json.tickets;
-    } catch (e) {
-        // Error de red — reintentar en el siguiente ciclo
-        return;
-    }
+    } catch { return; }
 
     const horaActual = horaLocalActual();
     const fechaHoy   = fechaLocalActual();
 
     tickets.forEach(t => {
         if (t.hora_alerta !== horaActual) return;
-
         const key = `ticket-${t.ticket_id}-${fechaHoy}`;
         if (alertaYaFired(key)) return;
-
         marcarAlertaFired(key);
-        emitirNotificacion(t.tecnico_nombre, t.hora, key);
+        const notif = new Notification('⚠ Precaución!', {
+            body : `El ticket asignado a ${t.tecnico_nombre} está a punto de expirar.`,
+            icon : `${BASE_URL}public/icon.png`,
+            tag  : key,
+            requireInteraction: true,
+        });
+        notif.onclick = () => { window.focus(); notif.close(); };
     });
 }
 
-// ── Inicialización ──────────────────────────────────────────
 function inicializarNotificaciones() {
-    if (!('Notification' in window)) return; // API no disponible (HTTP sin localhost)
-
+    if (!('Notification' in window)) return;
     if (Notification.permission === 'granted') {
-        iniciarCicloAlertas();
+        verificarAlertas();
+        setInterval(verificarAlertas, 30000);
     } else if (Notification.permission === 'default') {
         document.getElementById('bannerNotif').style.display = 'flex';
     }
-    // 'denied' → no hacer nada, no molestar
 }
-
 async function pedirPermisoNotificaciones() {
     if (!('Notification' in window)) return;
     const result = await Notification.requestPermission();
     document.getElementById('bannerNotif').style.display = 'none';
     if (result === 'granted') {
-        iniciarCicloAlertas();
-        verificarAlertas(); // revisión inmediata tras conceder
+        verificarAlertas();
+        setInterval(verificarAlertas, 30000);
     }
 }
 
-function iniciarCicloAlertas() {
-    // Intervalo de 30 s: se verifica 2 veces por minuto para no perderse
-    // la ventana de coincidencia de hora.
-    verificarAlertasServidor();
-
-    // 2. Crear un intervalo que repita la revisión cada 30 segundos (30000 milisegundos)
-    // Se verifica 2 veces por minuto para asegurar que no se pase la hora_alerta
-    setInterval(verificarAlertasServidor, 30000);
-}
-
-// Arrancar
 inicializarNotificaciones();
 </script>
 </body>

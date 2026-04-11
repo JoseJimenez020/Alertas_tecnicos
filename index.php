@@ -50,9 +50,10 @@ switch ($action) {
         (new TableroController())->index(); break;
 
     // Tickets
-    case 'ticket.store':  (new TicketController())->store();  break;
-    case 'ticket.show':   (new TicketController())->show();   break;
-    case 'ticket.update': (new TicketController())->update(); break;
+    case 'ticket.store':      (new TicketController())->store();      break;
+    case 'ticket.show':       (new TicketController())->show();       break;
+    case 'ticket.update':     (new TicketController())->update();     break;
+    case 'ticket.reschedule': (new TicketController())->reschedule(); break;
 
     // Llamadas
     case 'llamada.upsert': (new TicketController())->upsertLlamada(); break;
@@ -61,10 +62,10 @@ switch ($action) {
     case 'notif.tickets': (new NotifController())->tickets(); break;
 
     // Admin: Usuarios (rol 4)
-    case 'admin.usuarios':       (new AdminController())->usuarios();       break;
-    case 'admin.usuario.store':  (new AdminController())->storeUsuario();   break;
-    case 'admin.usuario.update': (new AdminController())->updateUsuario();  break;
-    case 'admin.usuario.delete': (new AdminController())->deleteUsuario();  break;
+    case 'admin.usuarios':       (new AdminController())->usuarios();      break;
+    case 'admin.usuario.store':  (new AdminController())->storeUsuario();  break;
+    case 'admin.usuario.update': (new AdminController())->updateUsuario(); break;
+    case 'admin.usuario.delete': (new AdminController())->deleteUsuario(); break;
 
     // Técnicos (rol 2)
     case 'tecnicos.panel':  (new TecnicoController())->panel();     break;
