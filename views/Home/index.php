@@ -34,7 +34,7 @@
             display: none; position: absolute; right: 0; top: 100%;
             background: #fff; border: 1px solid #ccc;
             box-shadow: 0 4px 12px rgba(0,0,0,.18);
-            min-width: 190px; z-index: 500;
+            min-width: 200px; z-index: 500;
         }
         .dropdown-menu.open { display: block; }
         .dropdown-menu a,
@@ -61,8 +61,9 @@
         }
         #bannerNotif .banner-text { flex: 1; }
         #bannerNotif .btn-activar {
-            padding: 4px 12px; background: #1a4d6d; color: #fff;
-            border: none; cursor: pointer; font-size: 11px; white-space: nowrap;
+            padding: 5px 14px; background: #1a4d6d; color: #fff;
+            border: none; cursor: pointer; font-size: 12px; font-weight: bold;
+            white-space: nowrap;
         }
         #bannerNotif .btn-activar:hover { background: #245f85; }
         #bannerNotif .btn-dismiss {
@@ -83,8 +84,7 @@
         }
         .badge-nodisponible {
             display: block; font-size: 8px; background: rgba(255,255,255,.22);
-            padding: 1px 3px; border-radius: 6px; margin-top: 2px;
-            line-height: 1.3;
+            padding: 1px 3px; border-radius: 6px; margin-top: 2px; line-height: 1.3;
         }
         td.cell-nodisponible {
             background-color: #156082 !important;
@@ -157,9 +157,7 @@
             border: 1px solid #dde; background: #f8f9ff;
             padding: 10px; margin-bottom: 8px;
         }
-        .llamada-bloque legend {
-            font-size: 11px; font-weight: bold; color: #1a4d6d; padding: 0 4px;
-        }
+        .llamada-bloque legend { font-size: 11px; font-weight: bold; color: #1a4d6d; padding: 0 4px; }
         .llamada-bloque .llamada-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         .llamada-bloque label { margin-top: 4px; }
         .llamada-guardada { background: #eafaf1; }
@@ -177,13 +175,9 @@
         .list-item.nodisponible .list-item-nombre {
             text-decoration: line-through; text-decoration-color: #c0392b; opacity: .7;
         }
-        .motivo-tag {
-            font-size: 9px; color: #c0392b; margin-left: 4px; white-space: nowrap;
-        }
-
-        /* Botón lápiz en lista inferior (solo rol=2, mostrado via JS) */
+        .motivo-tag { font-size: 9px; color: #c0392b; margin-left: 4px; white-space: nowrap; }
         .btn-tecnico-status {
-            display: none; /* JS lo activa */
+            display: none;
             margin-left: 6px; background: none; border: none;
             cursor: pointer; font-size: 11px; padding: 1px 3px;
             line-height: 1; color: #1a4d6d; flex-shrink: 0;
@@ -203,74 +197,44 @@ function getIconHtml(array $ticket, array $colorMap): string {
 
 $zonaOrder = ['Centro','Chontalpa','Sierra','Carmen','Delicias','Allende','Merida'];
 
-// $tecnicosAll: todos los técnicos (activos e inactivos) — pasado desde TableroController
-// Se usa para la tabla y para la lista inferior.
 $allTecs = $tecnicosAll ?? [];
 if (empty($allTecs)) {
-    // Fallback: construir desde el grupo (solo activos)
     foreach ($tecnicosGroup as $lista) foreach ($lista as $t) $allTecs[] = $t;
 }
 
-// Ordenar por zona según $zonaOrder
+// Ordenar técnicos por zonaOrder
 $tecnicosSorted = [];
 foreach ($zonaOrder as $z) {
     foreach ($allTecs as $t) {
         if (($t['zona_nombre'] ?? '') === $z) $tecnicosSorted[] = $t;
     }
 }
-// Zonas fuera del orden al final
 foreach ($allTecs as $t) {
     if (!in_array($t['zona_nombre'] ?? '', $zonaOrder)) $tecnicosSorted[] = $t;
 }
-// Deduplicar por TecnicoId
 $seen = []; $tmp = [];
 foreach ($tecnicosSorted as $t) {
     if (!isset($seen[$t['TecnicoId']])) { $seen[$t['TecnicoId']] = true; $tmp[] = $t; }
 }
 $tecnicosSorted = $tmp;
 
-// Colspan por zona (incluye inactivos)
+// Colspan por zona
 $zonaSpans = [];
 foreach ($tecnicosSorted as $t) {
     $z = $t['zona_nombre'] ?? 'Sin zona';
     $zonaSpans[$z] = ($zonaSpans[$z] ?? 0) + 1;
 }
 
-// Agrupar todos por zona para la lista inferior
+// Agrupar todos los técnicos por zona para lista inferior
 $allTecsByZona = [];
 foreach ($allTecs as $t) {
     $allTecsByZona[$t['zona_nombre'] ?? 'Sin zona'][] = $t;
 }
 
-$rolId     = (int) $usuario['rol_id'];
-$canCreate = in_array($rolId, [1, 2, 3]);
+$rolId        = (int) $usuario['rol_id'];
+$canCreate    = in_array($rolId, [1, 2, 3]);
 $rolesNombres = ['','Call Center','Mesa de Control','Supervisor CC','Administrador'];
-
-// Horarios para alertas JS (30 min antes de cada horario)
-$horariosAlerta = [];
-foreach ($horarios as $h) {
-    [$hh, $mm] = explode(':', $h['hora']);
-    $totalMin  = (int)$hh * 60 + (int)$mm - 30;
-    if ($totalMin >= 0) {
-        $horariosAlerta[] = [
-            'horario_id' => (int) $h['horario_id'],
-            'hora'       => substr($h['hora'], 0, 5),
-            'horaAlerta' => sprintf('%02d:%02d', intdiv($totalMin, 60), $totalMin % 60),
-        ];
-    }
-}
-
-// Aplanar tickets para JS (para el sistema de alertas)
-$ticketsFlat = [];
-foreach ($tickets as $byHorario) {
-    foreach ($byHorario as $t) {
-        $ticketsFlat[] = [
-            'ticket_id'  => (int) $t['ticket_id'],
-            'usuario_id' => (int) $t['usuario_id'],
-            'horario_id' => (int) $t['horario_id'],
-        ];
-    }
-}
+$fechaHoy     = date('Y-m-d'); // Fecha del servidor — zona horaria correcta
 ?>
 <div class="container">
 
@@ -301,6 +265,7 @@ foreach ($tickets as $byHorario) {
 
                     <?php if (in_array($rolId, [2, 4])): ?>
                     <div class="menu-section">Gestión</div>
+                    <a href="?action=horarios.panel">🕐 Gestión de Horarios</a>
                     <?php endif; ?>
                     <?php if ($rolId === 2 || $rolId === 4): ?>
                     <a href="?action=tecnicos.panel">⚙ Gestión de Técnicos</a>
@@ -315,7 +280,7 @@ foreach ($tickets as $byHorario) {
                     </button>
                 </div>
             </div>
-            <!-- Form logout oculto -->
+
             <form id="frmLogout" method="GET" action="" style="display:none;">
                 <input type="hidden" name="action" value="logout">
             </form>
@@ -327,15 +292,17 @@ foreach ($tickets as $byHorario) {
         </div>
     </div>
 
-    <!-- Banner notificaciones (solo si permiso = 'default') -->
+    <!-- Banner de notificaciones -->
     <div id="bannerNotif">
         <span class="banner-text">
-            🔔 Activa las notificaciones de escritorio para recibir recordatorios 30 min antes de cada ticket.
+            🔔 Activa las notificaciones para recibir avisos 30 minutos antes de cada ticket asignado.
         </span>
-        <button class="btn-activar" onclick="pedirPermisoNotificaciones()">Activar notificaciones</button>
+        <button class="btn-activar" onclick="pedirPermisoNotificaciones()">
+            🔔 Activar notificaciones
+        </button>
         <button class="btn-dismiss"
                 onclick="document.getElementById('bannerNotif').style.display='none'"
-                title="Cerrar banner">×</button>
+                title="Cerrar">×</button>
     </div>
 
     <div style="text-align:left;margin-bottom:5px;font-weight:bold;">
@@ -360,8 +327,7 @@ foreach ($tickets as $byHorario) {
                     $motivo     = $t['status_motivo'] ?? '';
                     $thClass    = $disponible ? '' : 'col-nodisponible';
                 ?>
-                <th class="<?= $thClass ?>"
-                    title="<?= htmlspecialchars($t['TecnicoNombre']) ?>">
+                <th class="<?= $thClass ?>" title="<?= htmlspecialchars($t['TecnicoNombre']) ?>">
                     <?= $t['TecnicoId'] ?>
                     <?php if (!$disponible): ?>
                     <span class="badge-nodisponible">
@@ -406,7 +372,7 @@ foreach ($tickets as $byHorario) {
         </tbody>
     </table>
 
-    <!-- ── LISTA INFERIOR DE TÉCNICOS ────────────────────────────── -->
+    <!-- ── LISTA INFERIOR ────────────────────────────────────────── -->
     <div class="staff-lists">
         <?php
         $groups = [
@@ -421,8 +387,8 @@ foreach ($tickets as $byHorario) {
                 if (!isset($allTecsByZona[$z])) continue; ?>
             <strong><?= $z ?></strong>
             <?php foreach ($allTecsByZona[$z] as $t):
-                $disp   = (int)$t['status'] === 1;
-                $mot    = $t['status_motivo'] ?? '';
+                $disp    = (int)$t['status'] === 1;
+                $mot     = $t['status_motivo'] ?? '';
                 $liClass = $disp ? 'list-item' : 'list-item nodisponible';
             ?>
             <div class="<?= $liClass ?>">
@@ -433,7 +399,6 @@ foreach ($tickets as $byHorario) {
                 <?php if (!$disp && $mot): ?>
                 <span class="motivo-tag">(<?= htmlspecialchars($mot) ?>)</span>
                 <?php endif; ?>
-                <!-- Lápiz: visible solo si rol=2, activado por JS -->
                 <button class="btn-tecnico-status"
                         data-tecnico-id="<?= $t['TecnicoId'] ?>"
                         data-tecnico-nombre="<?= htmlspecialchars($t['TecnicoNombre']) ?>"
@@ -446,20 +411,18 @@ foreach ($tickets as $byHorario) {
         </div>
         <?php endforeach; ?>
 
-        <!-- Call center y Mesa de control (desde BD) -->
         <div class="list-group">
             <h3>Call center</h3>
             <?php
             $usuarioModel2 = new UsuarioModel();
             $todosUs   = $usuarioModel2->getAll();
-            $ccUsers   = array_filter($todosUs, fn($u) => $u['rol_id'] == 1);
+            $ccUsers = array_filter($todosUs, fn($u) => $u['rol_id'] == 1 || $u['rol_id'] == 3);
             $mesaUsers = array_filter($todosUs, fn($u) => $u['rol_id'] == 2);
             foreach ($ccUsers as $u): ?>
             <div class="list-item <?= htmlspecialchars($u['color']) ?>">
                 <span class="list-item-nombre"><?= htmlspecialchars(strtoupper($u['nombre'])) ?></span>
             </div>
             <?php endforeach; ?>
-
             <h3 style="margin-top:15px;">Mesa de control</h3>
             <?php foreach ($mesaUsers as $u): ?>
             <div class="list-item <?= htmlspecialchars($u['color']) ?>">
@@ -470,9 +433,7 @@ foreach ($tickets as $byHorario) {
     </div>
 </div>
 
-<!-- ═══════════════════════════════════════════
-     MODAL DE TICKET
-═══════════════════════════════════════════ -->
+<!-- ═══════════════════════════ MODAL TICKET ═══════════════════════════ -->
 <div class="modal-overlay" id="modalOverlay">
     <div class="modal-box">
         <div class="modal-header">
@@ -482,12 +443,10 @@ foreach ($tickets as $byHorario) {
         <div class="modal-body">
             <div class="modal-meta" id="modalMeta"></div>
             <div class="feedback" id="modalFeedback"></div>
-
             <input type="hidden" id="fTicketId">
             <input type="hidden" id="fFecha">
             <input type="hidden" id="fHorarioId">
             <input type="hidden" id="fTecnicoId">
-
             <label>Nombre del Cliente</label>
             <input type="text" id="fCliente" maxlength="255" placeholder="Nombre completo">
             <label>Colonia</label>
@@ -499,7 +458,6 @@ foreach ($tickets as $byHorario) {
             <label>Teléfono de Contacto (10 dígitos)</label>
             <input type="tel" id="fTelefono" maxlength="10" placeholder="9931234567">
 
-            <!-- Llamadas (solo en modo ver/editar) -->
             <div class="llamadas-section" id="llamadasSection" style="display:none;">
                 <h4>📞 Registro de Llamadas</h4>
                 <?php for ($n = 1; $n <= 3; $n++): ?>
@@ -508,13 +466,11 @@ foreach ($tickets as $byHorario) {
                     <div class="llamada-fields">
                         <div>
                             <label>Respuesta del Técnico</label>
-                            <textarea id="lTecnico<?= $n ?>" maxlength="255"
-                                      placeholder="Respuesta del técnico..."></textarea>
+                            <textarea id="lTecnico<?= $n ?>" maxlength="255" placeholder="Respuesta del técnico..."></textarea>
                         </div>
                         <div>
                             <label>Respuesta del Cliente</label>
-                            <textarea id="lCliente<?= $n ?>" maxlength="255"
-                                      placeholder="Respuesta del cliente..."></textarea>
+                            <textarea id="lCliente<?= $n ?>" maxlength="255" placeholder="Respuesta del cliente..."></textarea>
                         </div>
                     </div>
                     <button class="btn-save-llamada" onclick="saveLlamada(<?= $n ?>)">
@@ -529,9 +485,7 @@ foreach ($tickets as $byHorario) {
     </div>
 </div>
 
-<!-- ═══════════════════════════════════════════
-     MODAL DISPONIBILIDAD TÉCNICO (rol 2)
-═══════════════════════════════════════════ -->
+<!-- ═══════════════ MODAL DISPONIBILIDAD TÉCNICO ═══════════════ -->
 <div class="modal-overlay" id="modalTecnico">
     <div class="modal-box" style="width:360px;">
         <div class="modal-header">
@@ -559,14 +513,11 @@ foreach ($tickets as $byHorario) {
 <script>
 const ROL_ID        = <?= (int) $rolId ?>;
 const BASE_URL      = '<?= BASE_URL ?>';
-const MI_USUARIO_ID = <?= (int) ($usuario['id'] ?? 0) ?>;
 const FECHA_TABLERO = '<?= htmlspecialchars($fecha) ?>';
-const HORARIOS_ALERTA = <?= json_encode($horariosAlerta) ?>;
-const TICKETS_HOY     = <?= json_encode($ticketsFlat) ?>;
+// Fecha de HOY según el servidor PHP (zona horaria configurada en php.ini)
+const FECHA_HOY_SERVIDOR = '<?= $fechaHoy ?>';
 
-/* ══════════════════════════════════════════════════════════
-   MENÚ DESPLEGABLE
-══════════════════════════════════════════════════════════ */
+/* ── Menú desplegable ─────────────────────────────────────── */
 function toggleMenu(e) {
     e.stopPropagation();
     document.getElementById('dropdownMenu').classList.toggle('open');
@@ -575,23 +526,52 @@ document.addEventListener('click', function() {
     document.getElementById('dropdownMenu').classList.remove('open');
 });
 
-/* ══════════════════════════════════════════════════════════
-   BOTÓN LÁPIZ: mostrar solo si rol = 2
-══════════════════════════════════════════════════════════ */
+/* ── Botón lápiz: solo rol 2 ────────────────────────────────── */
 if (ROL_ID === 2) {
     document.querySelectorAll('.btn-tecnico-status')
             .forEach(b => b.style.display = 'inline-block');
 }
 
-/* ══════════════════════════════════════════════════════════
+/* ══════════════════════════════════════════════════════════════
    MODAL DE TICKET
-══════════════════════════════════════════════════════════ */
+══════════════════════════════════════════════════════════════ */
 function handleCellClick(cell) {
     const hasTicket = cell.classList.contains('occupied');
     const canCreate = cell.dataset.canCreate === '1';
     const ticketId  = cell.dataset.ticketId || null;
     if (hasTicket)      openViewMode(parseInt(ticketId));
     else if (canCreate) openCreateMode(cell);
+}
+
+async function verificarAlertasServidor() {
+    try {
+        const response = await fetch('<?= BASE_URL ?>?action=notif.tickets');
+        if (!response.ok) return;
+        
+        const jsonResponse = await response.json();
+        
+        // CAMBIO AQUÍ: Validamos 'jsonResponse.tickets' en lugar de 'data'
+        if (jsonResponse.success && Array.isArray(jsonResponse.tickets)) {
+            
+            const tickets = jsonResponse.tickets; // Usamos la clave correcta
+            const horaActual = horaLocalActual();
+            const fechaHoy   = fechaLocalActual();
+
+            tickets.forEach(t => {
+                if (t.hora_alerta !== horaActual) return;
+
+                const key = `ticket-${t.ticket_id}-${fechaHoy}`;
+                if (alertaYaFired(key)) return;
+
+                marcarAlertaFired(key);
+                emitirNotificacion(t.tecnico_nombre, t.hora, key);
+            });
+        } else {
+            console.error('La respuesta del servidor no tiene el formato esperado:', jsonResponse);
+        }
+    } catch (error) {
+        console.error('Error al obtener notificaciones en segundo plano:', error);
+    }
 }
 
 function openCreateMode(cell) {
@@ -615,7 +595,6 @@ async function openViewMode(ticketId) {
     resetModal();
     document.getElementById('modalTitle').textContent = 'Detalle del Ticket';
     setFieldsReadonly(true);
-
     const res  = await fetch(`${BASE_URL}?action=ticket.show&id=${ticketId}`);
     const json = await res.json();
     if (!json.success) {
@@ -635,7 +614,6 @@ async function openViewMode(ticketId) {
     document.getElementById('fDescripcion').value = t.Descripcion;
     document.getElementById('fTelefono').value    = t.Telefono;
 
-    // Cargar llamadas
     document.getElementById('llamadasSection').style.display = 'block';
     for (let n = 1; n <= 3; n++) {
         const ll = (t.llamadas && t.llamadas[n]) || {};
@@ -651,7 +629,6 @@ async function openViewMode(ticketId) {
             status.textContent = '';
         }
     }
-
     let footer = `<button class="btn btn-secondary" onclick="closeModal('modalOverlay')">Cerrar</button>`;
     if (t.can_edit) footer += `<button class="btn btn-warning" onclick="enableEdit()">Editar</button>`;
     document.getElementById('modalFooter').innerHTML = footer;
@@ -671,14 +648,11 @@ async function saveTicket() {
     const payload = buildPayload();
     if (!validatePayload(payload)) return;
     const res  = await fetch(`${BASE_URL}?action=ticket.store`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload),
     });
     const json = await res.json();
-    if (json.success) {
-        showFeedback('Ticket registrado correctamente.', 'success');
-        setTimeout(() => location.reload(), 900);
-    } else showFeedback(json.message || 'Error al guardar.', 'error');
+    if (json.success) { showFeedback('Ticket registrado correctamente.', 'success'); setTimeout(()=>location.reload(),900); }
+    else showFeedback(json.message || 'Error al guardar.', 'error');
 }
 
 async function updateTicket() {
@@ -686,30 +660,26 @@ async function updateTicket() {
     payload.ticket_id = parseInt(document.getElementById('fTicketId').value);
     if (!validatePayload(payload)) return;
     const res  = await fetch(`${BASE_URL}?action=ticket.update`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload),
     });
     const json = await res.json();
-    if (json.success) {
-        showFeedback('Ticket actualizado.', 'success');
-        setTimeout(() => location.reload(), 900);
-    } else showFeedback(json.message || 'Error al actualizar.', 'error');
+    if (json.success) { showFeedback('Ticket actualizado.', 'success'); setTimeout(()=>location.reload(),900); }
+    else showFeedback(json.message || 'Error al actualizar.', 'error');
 }
 
 async function saveLlamada(n) {
     const ticketId = parseInt(document.getElementById('fTicketId').value);
     if (!ticketId) return;
     const payload = {
-        ticket_id        : ticketId, no_llamada: n,
+        ticket_id: ticketId, no_llamada: n,
         respuesta_tecnico: document.getElementById(`lTecnico${n}`).value.trim(),
         respuesta_cliente: document.getElementById(`lCliente${n}`).value.trim(),
     };
     const res  = await fetch(`${BASE_URL}?action=llamada.upsert`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload),
     });
     const json = await res.json();
-    const st   = document.getElementById(`lStatus${n}`);
+    const st = document.getElementById(`lStatus${n}`);
     if (json.success) {
         document.getElementById(`llamadaBloque${n}`).classList.add('llamada-guardada');
         st.textContent = '✓ Guardada'; st.style.color = '#155724';
@@ -733,7 +703,7 @@ function validatePayload(p) {
         showFeedback('Todos los campos son obligatorios.', 'error'); return false;
     }
     if (!/^\d{10}$/.test(p.telefono)) {
-        showFeedback('El teléfono debe tener exactamente 10 dígitos numéricos.', 'error'); return false;
+        showFeedback('El teléfono debe tener exactamente 10 dígitos.', 'error'); return false;
     }
     return true;
 }
@@ -762,9 +732,9 @@ function showFeedback(msg, type) {
     el.textContent = msg; el.className = 'feedback ' + type;
 }
 
-/* ══════════════════════════════════════════════════════════
+/* ══════════════════════════════════════════════════════════════
    MODAL DISPONIBILIDAD TÉCNICO
-══════════════════════════════════════════════════════════ */
+══════════════════════════════════════════════════════════════ */
 function openEditTecnicoModal(btn) {
     document.getElementById('tTecnicoId').value           = btn.dataset.tecnicoId;
     document.getElementById('tTecnicoNombre').textContent = btn.dataset.tecnicoNombre;
@@ -777,8 +747,8 @@ async function saveTecnicoStatus() {
     const id     = parseInt(document.getElementById('tTecnicoId').value);
     const motivo = document.getElementById('tMotivo').value || null;
     const res  = await fetch(`${BASE_URL}?action=tecnico.status`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tecnico_id: id, motivo }),
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({ tecnico_id: id, motivo }),
     });
     const json = await res.json();
     const fb = document.getElementById('tecnicoFeedback');
@@ -788,7 +758,7 @@ async function saveTecnicoStatus() {
     } else { fb.textContent = json.message || 'Error'; fb.className = 'feedback error'; }
 }
 
-/* ── Helpers de modales ─────────────────────────────────── */
+/* ── Helpers de modales ────────────────────────────────────── */
 function openModal(id)  { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 function formatDate(str) {
@@ -802,32 +772,118 @@ function formatDate(str) {
     });
 });
 
-/* ══════════════════════════════════════════════════════════
-   ALERTAS DE ESCRITORIO
-   ─────────────────────────────────────────────────────────
-   CORRECCIONES aplicadas:
-   1. No se pide permiso automáticamente. Se muestra un banner
-      con botón explícito; el usuario decide si activa o no.
-   2. La fecha "de hoy" se calcula desde el SERVIDOR (PHP) y
-      se compara con la fecha del tablero. Esto evita el bug
-      de avance al día siguiente: PHP siempre devuelve la fecha
-      correcta en la zona horaria configurada del servidor
-      (debe ser America/Mexico_City en php.ini).
-   3. La clave de alerta incluye la fecha, por lo que no puede
-      duplicarse entre días.
-══════════════════════════════════════════════════════════ */
-const _alertasFired = new Set();
+/* ══════════════════════════════════════════════════════════════
+   SISTEMA DE ALERTAS DE ESCRITORIO — versión robusta
+   ──────────────────────────────────────────────────────────────
+   Diseño:
+   1. NO se solicita permiso automáticamente. El banner amarillo
+      muestra un botón explícito. Si ya fue concedido antes, el
+      banner no aparece y las alertas arrancan directamente.
 
+   2. Usa POLLING al endpoint ?action=notif.tickets cada 60 s.
+      El endpoint consulta la BD en tiempo real, así los tickets
+      nuevos registrados después de cargar la página también
+      generan alertas. Esto es más confiable que depender de
+      datos cargados en el HTML inicial.
+
+   3. La verificación compara la hora LOCAL del navegador
+      (hh:mm) con la hora_alerta de cada ticket. Para evitar
+      perderse la ventana de 1 minuto, se verifica en los
+      segundos 0-59 del minuto con un intervalo de 30 segundos
+      (2 verificaciones por minuto).
+
+   4. Cada alerta tiene una clave única por ticket + fecha.
+      Se guarda en sessionStorage para persistir entre
+      revisiones dentro de la misma sesión.
+
+   5. Solo dispara alertas si FECHA_TABLERO === FECHA_HOY_SERVIDOR
+      (ambos vienen de PHP), evitando alertas al ver días pasados.
+
+   Texto de la notificación (según especificación):
+   - Título: "⚠ Precaución!"
+   - Cuerpo: "El ticket asignado a <TecnicoNombre> está a punto de expirar."
+══════════════════════════════════════════════════════════════ */
+
+// Claves de alertas ya disparadas — usa sessionStorage para
+// sobrevivir a revisiones del setInterval sin duplicarse.
+function alertaYaFired(key) {
+    return sessionStorage.getItem('alerta_' + key) === '1';
+}
+function marcarAlertaFired(key) {
+    sessionStorage.setItem('alerta_' + key, '1');
+}
+
+// Hora local del cliente en formato "HH:MM"
+function horaLocalActual() {
+    const ahora = new Date();
+    return String(ahora.getHours()).padStart(2,'0') + ':' + String(ahora.getMinutes()).padStart(2,'0');
+}
+
+// Fecha local del cliente en formato "YYYY-MM-DD"
+function fechaLocalActual() {
+    const hoy = new Date();
+    return hoy.getFullYear()
+        + '-' + String(hoy.getMonth()+1).padStart(2,'0')
+        + '-' + String(hoy.getDate()).padStart(2,'0');
+}
+
+// Emitir notificación del navegador
+function emitirNotificacion(tecnicoNombre, hora, key) {
+    const notif = new Notification('⚠ Precaución!', {
+        body : `El ticket asignado a ${tecnicoNombre} está a punto de expirar.`,
+        icon : `${BASE_URL}public/icon.png`,
+        tag  : key,           // evita duplicados en el notification center del SO
+        requireInteraction: true,  // no desaparece sola hasta que el usuario la cierra
+    });
+    notif.onclick = () => { window.focus(); notif.close(); };
+}
+
+// Verificar tickets contra la hora actual y disparar alertas
+async function verificarAlertas() {
+    if (Notification.permission !== 'granted') return;
+
+    // Solo alertar si el tablero muestra HOY
+    if (FECHA_TABLERO !== FECHA_HOY_SERVIDOR) return;
+    // Doble check: comparar también con la fecha local del cliente
+    if (FECHA_HOY_SERVIDOR !== fechaLocalActual()) return;
+
+    // Obtener tickets en tiempo real del servidor
+    let tickets;
+    try {
+        const res = await fetch(`${BASE_URL}?action=notif.tickets`, { cache: 'no-store' });
+        if (!res.ok) return;
+        const json = await res.json();
+        if (!json.success) return;
+        tickets = json.tickets;
+    } catch (e) {
+        // Error de red — reintentar en el siguiente ciclo
+        return;
+    }
+
+    const horaActual = horaLocalActual();
+    const fechaHoy   = fechaLocalActual();
+
+    tickets.forEach(t => {
+        if (t.hora_alerta !== horaActual) return;
+
+        const key = `ticket-${t.ticket_id}-${fechaHoy}`;
+        if (alertaYaFired(key)) return;
+
+        marcarAlertaFired(key);
+        emitirNotificacion(t.tecnico_nombre, t.hora, key);
+    });
+}
+
+// ── Inicialización ──────────────────────────────────────────
 function inicializarNotificaciones() {
-    if (!('Notification' in window)) return;
+    if (!('Notification' in window)) return; // API no disponible (HTTP sin localhost)
+
     if (Notification.permission === 'granted') {
-        // Permiso ya concedido: iniciar directamente, sin banner
-        iniciarIntervalAlertas();
+        iniciarCicloAlertas();
     } else if (Notification.permission === 'default') {
-        // No decidido aún: mostrar banner con botón
         document.getElementById('bannerNotif').style.display = 'flex';
     }
-    // 'denied': no mostrar nada
+    // 'denied' → no hacer nada, no molestar
 }
 
 async function pedirPermisoNotificaciones() {
@@ -835,60 +891,22 @@ async function pedirPermisoNotificaciones() {
     const result = await Notification.requestPermission();
     document.getElementById('bannerNotif').style.display = 'none';
     if (result === 'granted') {
-        iniciarIntervalAlertas();
-        verificarAlertas();
+        iniciarCicloAlertas();
+        verificarAlertas(); // revisión inmediata tras conceder
     }
 }
 
-function iniciarIntervalAlertas() {
-    verificarAlertas();                   // revisión inmediata
-    setInterval(verificarAlertas, 60000); // luego cada minuto
+function iniciarCicloAlertas() {
+    // Intervalo de 30 s: se verifica 2 veces por minuto para no perderse
+    // la ventana de coincidencia de hora.
+    verificarAlertasServidor();
+
+    // 2. Crear un intervalo que repita la revisión cada 30 segundos (30000 milisegundos)
+    // Se verifica 2 veces por minuto para asegurar que no se pase la hora_alerta
+    setInterval(verificarAlertasServidor, 30000);
 }
 
-function verificarAlertas() {
-    if (Notification.permission !== 'granted') return;
-
-    // Comparar con la fecha real del servidor (generada en PHP)
-    // La fecha del tablero viene en FECHA_TABLERO ('YYYY-MM-DD', hora del servidor)
-    // La hora actual la leemos del cliente (que debe estar en la misma zona)
-    const ahora = new Date();
-    // Construir "hoy" en formato YYYY-MM-DD usando la hora LOCAL del cliente
-    const yy   = ahora.getFullYear();
-    const mm   = String(ahora.getMonth() + 1).padStart(2, '0');
-    const dd   = String(ahora.getDate()).padStart(2, '0');
-    const fechaClienteHoy = `${yy}-${mm}-${dd}`;
-
-    // Solo disparar alertas si el tablero muestra el día de hoy
-    if (FECHA_TABLERO !== fechaClienteHoy) return;
-
-    const hh  = String(ahora.getHours()).padStart(2, '0');
-    const min = String(ahora.getMinutes()).padStart(2, '0');
-    const horaActual = `${hh}:${min}`;
-
-    // Filtrar tickets del usuario logueado
-    const misTickets = TICKETS_HOY.filter(t => t.usuario_id === MI_USUARIO_ID);
-
-    HORARIOS_ALERTA.forEach(ha => {
-        if (ha.horaAlerta !== horaActual) return;
-
-        const key = `alerta-${ha.horario_id}-${fechaClienteHoy}`;
-        if (_alertasFired.has(key)) return;
-
-        const tieneTicket = misTickets.some(t => t.horario_id === ha.horario_id);
-        if (!tieneTicket) return;
-
-        _alertasFired.add(key);
-        const notif = new Notification('⏰ Recordatorio de Ticket', {
-            body : `Faltan 30 minutos para el horario ${ha.hora}. Recuerda dar seguimiento.`,
-            icon : `${BASE_URL}public/icon.png`,
-            tag  : key,
-            requireInteraction: false,
-        });
-        notif.onclick = () => { window.focus(); notif.close(); };
-    });
-}
-
-// Inicializar al cargar la página
+// Arrancar
 inicializarNotificaciones();
 </script>
 </body>

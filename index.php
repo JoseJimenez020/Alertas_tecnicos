@@ -2,12 +2,10 @@
 define('BASE_PATH', __DIR__);
 define('BASE_URL', 'http://alertas.local.com/');
 
-// ── Cargar helpers de seguridad ANTES de session_start ───────────────
 require_once BASE_PATH . '/config/Security.php';
 Security::configureSession();
 session_start();
 
-// ── Headers de seguridad HTTP ────────────────────────────────────────
 header('X-Frame-Options: DENY');
 header('X-Content-Type-Options: nosniff');
 header('X-XSS-Protection: 1; mode=block');
@@ -26,23 +24,17 @@ require_once BASE_PATH . '/controller/TicketController.php';
 require_once BASE_PATH . '/controller/TableroController.php';
 require_once BASE_PATH . '/controller/AdminController.php';
 require_once BASE_PATH . '/controller/TecnicoController.php';
+require_once BASE_PATH . '/controller/HorarioController.php';
+require_once BASE_PATH . '/controller/NotifController.php';
 
 $action = $_GET['action'] ?? 'tablero';
 $ip     = Security::clientIp();
 
-// ── Rutas públicas (sin sesión requerida) ────────────────────────────
-if ($action === 'login') {
-    $ctrl = new AuthController();
-    $ctrl->login();
-    exit;
-}
-if ($action === 'logout') {
-    $ctrl = new AuthController();
-    $ctrl->logout();
-    exit;
-}
+// ── Rutas públicas ───────────────────────────────────────────────────
+if ($action === 'login')  { (new AuthController())->login();  exit; }
+if ($action === 'logout') { (new AuthController())->logout(); exit; }
 
-// ── Validar sesión activa en TODAS las rutas protegidas ──────────────
+// ── Validar sesión ───────────────────────────────────────────────────
 if (!Security::validateSession($ip)) {
     $msg = isset($_SESSION['usuario']) ? '?action=login&msg=expired' : '?action=login';
     Security::destroySession();
@@ -51,83 +43,40 @@ if (!Security::validateSession($ip)) {
     exit;
 }
 
-// ── Enrutador principal ──────────────────────────────────────────────
+// ── Enrutador ────────────────────────────────────────────────────────
 switch ($action) {
 
-    // ── Tablero ──────────────────────────────────────────────────────
     case 'tablero':
-        $ctrl = new TableroController();
-        $ctrl->index();
-        break;
+        (new TableroController())->index(); break;
 
-    // ── Tickets ──────────────────────────────────────────────────────
-    case 'ticket.store':
-        $ctrl = new TicketController();
-        $ctrl->store();
-        break;
+    // Tickets
+    case 'ticket.store':  (new TicketController())->store();  break;
+    case 'ticket.show':   (new TicketController())->show();   break;
+    case 'ticket.update': (new TicketController())->update(); break;
 
-    case 'ticket.show':
-        $ctrl = new TicketController();
-        $ctrl->show();
-        break;
+    // Llamadas
+    case 'llamada.upsert': (new TicketController())->upsertLlamada(); break;
 
-    case 'ticket.update':
-        $ctrl = new TicketController();
-        $ctrl->update();
-        break;
+    // Notificaciones (polling JS)
+    case 'notif.tickets': (new NotifController())->tickets(); break;
 
-    // ── Llamadas ─────────────────────────────────────────────────────
-    case 'llamada.upsert':
-        $ctrl = new TicketController();
-        $ctrl->upsertLlamada();
-        break;
+    // Admin: Usuarios (rol 4)
+    case 'admin.usuarios':       (new AdminController())->usuarios();       break;
+    case 'admin.usuario.store':  (new AdminController())->storeUsuario();   break;
+    case 'admin.usuario.update': (new AdminController())->updateUsuario();  break;
+    case 'admin.usuario.delete': (new AdminController())->deleteUsuario();  break;
 
-    // ── Admin: Usuarios (rol 4) ───────────────────────────────────────
-    case 'admin.usuarios':
-        $ctrl = new AdminController();
-        $ctrl->usuarios();
-        break;
+    // Técnicos (rol 2)
+    case 'tecnicos.panel':  (new TecnicoController())->panel();     break;
+    case 'tecnico.store':   (new TecnicoController())->store();     break;
+    case 'tecnico.update':  (new TecnicoController())->update();    break;
+    case 'tecnico.status':  (new TecnicoController())->setStatus(); break;
+    case 'tecnico.delete':  (new TecnicoController())->delete();    break;
 
-    case 'admin.usuario.store':
-        $ctrl = new AdminController();
-        $ctrl->storeUsuario();
-        break;
-
-    case 'admin.usuario.update':
-        $ctrl = new AdminController();
-        $ctrl->updateUsuario();
-        break;
-
-    case 'admin.usuario.delete':
-        $ctrl = new AdminController();
-        $ctrl->deleteUsuario();
-        break;
-
-    // ── Técnicos: Panel (rol 2) ───────────────────────────────────────
-    case 'tecnicos.panel':
-        $ctrl = new TecnicoController();
-        $ctrl->panel();
-        break;
-
-    case 'tecnico.store':
-        $ctrl = new TecnicoController();
-        $ctrl->store();
-        break;
-
-    case 'tecnico.update':
-        $ctrl = new TecnicoController();
-        $ctrl->update();
-        break;
-
-    case 'tecnico.status':
-        $ctrl = new TecnicoController();
-        $ctrl->setStatus();
-        break;
-
-    case 'tecnico.delete':
-        $ctrl = new TecnicoController();
-        $ctrl->delete();
-        break;
+    // Horarios (rol 2 y 4)
+    case 'horarios.panel':  (new HorarioController())->panel();  break;
+    case 'horario.store':   (new HorarioController())->store();  break;
+    case 'horario.delete':  (new HorarioController())->delete(); break;
 
     default:
         http_response_code(404);
