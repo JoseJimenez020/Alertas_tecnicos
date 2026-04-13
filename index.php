@@ -28,11 +28,17 @@ require_once BASE_PATH . '/controller/HorarioController.php';
 require_once BASE_PATH . '/controller/NotifController.php';
 
 $action = $_GET['action'] ?? 'tablero';
-$ip     = Security::clientIp();
+$ip = Security::clientIp();
 
 // ── Rutas públicas ───────────────────────────────────────────────────
-if ($action === 'login')  { (new AuthController())->login();  exit; }
-if ($action === 'logout') { (new AuthController())->logout(); exit; }
+if ($action === 'login') {
+    (new AuthController())->login();
+    exit;
+}
+if ($action === 'logout') {
+    (new AuthController())->logout();
+    exit;
+}
 
 // ── Validar sesión ───────────────────────────────────────────────────
 if (!Security::validateSession($ip)) {
@@ -47,38 +53,80 @@ if (!Security::validateSession($ip)) {
 switch ($action) {
 
     case 'tablero':
-        (new TableroController())->index(); break;
+        (new TableroController())->index();
+        break;
 
     // Tickets
-    case 'ticket.store':      (new TicketController())->store();      break;
-    case 'ticket.show':       (new TicketController())->show();       break;
-    case 'ticket.update':     (new TicketController())->update();     break;
-    case 'ticket.reschedule': (new TicketController())->reschedule(); break;
-    case 'ticket.getSlots':   (new TicketController())->getSlots();   break;
+    case 'ticket.store':
+        (new TicketController())->store();
+        break;
+    case 'ticket.show':
+        (new TicketController())->show();
+        break;
+    case 'ticket.update':
+        (new TicketController())->update();
+        break;
+    case 'ticket.delete':
+        (new TicketController())->delete();
+        break;
+    case 'ticket.reschedule':
+        (new TicketController())->reschedule();
+        break;
+    case 'ticket.getSlots':
+        (new TicketController())->getSlots();
+        break;
 
     // Llamadas
-    case 'llamada.upsert': (new TicketController())->upsertLlamada(); break;
+    case 'llamada.upsert':
+        (new TicketController())->upsertLlamada();
+        break;
 
     // Notificaciones (polling JS)
-    case 'notif.tickets': (new NotifController())->tickets(); break;
+    case 'notif.tickets':
+        (new NotifController())->tickets();
+        break;
 
     // Admin: Usuarios (rol 4)
-    case 'admin.usuarios':       (new AdminController())->usuarios();      break;
-    case 'admin.usuario.store':  (new AdminController())->storeUsuario();  break;
-    case 'admin.usuario.update': (new AdminController())->updateUsuario(); break;
-    case 'admin.usuario.delete': (new AdminController())->deleteUsuario(); break;
+    case 'admin.usuarios':
+        (new AdminController())->usuarios();
+        break;
+    case 'admin.usuario.store':
+        (new AdminController())->storeUsuario();
+        break;
+    case 'admin.usuario.update':
+        (new AdminController())->updateUsuario();
+        break;
+    case 'admin.usuario.delete':
+        (new AdminController())->deleteUsuario();
+        break;
 
     // Técnicos (rol 2)
-    case 'tecnicos.panel':  (new TecnicoController())->panel();     break;
-    case 'tecnico.store':   (new TecnicoController())->store();     break;
-    case 'tecnico.update':  (new TecnicoController())->update();    break;
-    case 'tecnico.status':  (new TecnicoController())->setStatus(); break;
-    case 'tecnico.delete':  (new TecnicoController())->delete();    break;
+    case 'tecnicos.panel':
+        (new TecnicoController())->panel();
+        break;
+    case 'tecnico.store':
+        (new TecnicoController())->store();
+        break;
+    case 'tecnico.update':
+        (new TecnicoController())->update();
+        break;
+    case 'tecnico.status':
+        (new TecnicoController())->setStatus();
+        break;
+    case 'tecnico.delete':
+        (new TecnicoController())->delete();
+        break;
 
     // Horarios (rol 2 y 4)
-    case 'horarios.panel':  (new HorarioController())->panel();  break;
-    case 'horario.store':   (new HorarioController())->store();  break;
-    case 'horario.delete':  (new HorarioController())->delete(); break;
+    case 'horarios.panel':
+        (new HorarioController())->panel();
+        break;
+    case 'horario.store':
+        (new HorarioController())->store();
+        break;
+    case 'horario.delete':
+        (new HorarioController())->delete();
+        break;
 
     default:
         http_response_code(404);

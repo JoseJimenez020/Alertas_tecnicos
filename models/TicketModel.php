@@ -64,15 +64,15 @@ class TicketModel
                 (:usuario_id, :fecha, :horario_id, :tecnico_id, :cliente, :colonia, :ticket, :descripcion, :telefono)
         ");
         $stmt->execute([
-            ':usuario_id'  => $data['usuario_id'],
-            ':fecha'       => $data['fecha'],
-            ':horario_id'  => $data['horario_id'],
-            ':tecnico_id'  => $data['tecnico_id'],
-            ':cliente'     => $data['cliente'],
-            ':colonia'     => $data['colonia'],
-            ':ticket'      => $data['ticket_num'],
+            ':usuario_id' => $data['usuario_id'],
+            ':fecha' => $data['fecha'],
+            ':horario_id' => $data['horario_id'],
+            ':tecnico_id' => $data['tecnico_id'],
+            ':cliente' => $data['cliente'],
+            ':colonia' => $data['colonia'],
+            ':ticket' => $data['ticket_num'],
             ':descripcion' => $data['descripcion'],
-            ':telefono'    => $data['telefono'],
+            ':telefono' => $data['telefono'],
         ]);
         return (int) $this->db->lastInsertId();
     }
@@ -92,15 +92,26 @@ class TicketModel
             WHERE ticket_id  = :id
         ");
         return $stmt->execute([
-            ':cliente'     => $data['cliente'],
-            ':colonia'     => $data['colonia'],
-            ':ticket_num'  => $data['ticket_num'],
+            ':cliente' => $data['cliente'],
+            ':colonia' => $data['colonia'],
+            ':ticket_num' => $data['ticket_num'],
             ':descripcion' => $data['descripcion'],
-            ':telefono'    => $data['telefono'],
-            ':horario_id'  => $data['horario_id'],
-            ':tecnico_id'  => $data['tecnico_id'],
-            ':id'          => $id,
+            ':telefono' => $data['telefono'],
+            ':horario_id' => $data['horario_id'],
+            ':tecnico_id' => $data['tecnico_id'],
+            ':id' => $id,
         ]);
+    }
+
+    /** Eliminar un ticket por ID */
+    public function delete(int $id): bool
+    {
+        // Descomenta estas líneas si tu base de datos NO tiene ON DELETE CASCADE:
+        // $stmtLlamadas = $this->db->prepare("DELETE FROM tm_llamadas WHERE ticket_id = :id");
+        // $stmtLlamadas->execute([':id' => $id]);
+
+        $stmt = $this->db->prepare("DELETE FROM tm_ticket WHERE ticket_id = :id");
+        return $stmt->execute([':id' => $id]);
     }
 
     /**
@@ -117,10 +128,10 @@ class TicketModel
                 WHERE ticket_id = :id
             ");
             $stmt->execute([
-                ':fecha'      => $newFecha,
+                ':fecha' => $newFecha,
                 ':horario_id' => $newHorarioId,
                 ':tecnico_id' => $newTecnicoId,
-                ':id'         => $ticketId,
+                ':id' => $ticketId,
             ]);
         } else {
             $stmt = $this->db->prepare("
@@ -130,9 +141,9 @@ class TicketModel
                 WHERE ticket_id = :id
             ");
             $stmt->execute([
-                ':fecha'      => $newFecha,
+                ':fecha' => $newFecha,
                 ':horario_id' => $newHorarioId,
-                ':id'         => $ticketId,
+                ':id' => $ticketId,
             ]);
         }
     }
@@ -166,8 +177,10 @@ class TicketModel
     private function nextWorkday(string $fecha): string
     {
         $dow = (int) date('w', strtotime($fecha)); // 0=Dom, 6=Sáb
-        if ($dow === 0) return date('Y-m-d', strtotime($fecha . ' +1 day'));
-        if ($dow === 6) return date('Y-m-d', strtotime($fecha . ' +2 days'));
+        if ($dow === 0)
+            return date('Y-m-d', strtotime($fecha . ' +1 day'));
+        if ($dow === 6)
+            return date('Y-m-d', strtotime($fecha . ' +2 days'));
         return $fecha;
     }
 
@@ -222,17 +235,18 @@ class TicketModel
     public function getNextAvailableSlot(int $tecnicoId, int $currentHorarioId, string $currentFecha): ?array
     {
         $horarios = $this->getAllHorarios();
-        if (empty($horarios)) return null;
+        if (empty($horarios))
+            return null;
 
         // Índice: horario_id → posición
         $posMap = [];
         foreach ($horarios as $i => $h) {
-            $posMap[(int)$h['horario_id']] = $i;
+            $posMap[(int) $h['horario_id']] = $i;
         }
-        $total       = count($horarios);
-        $currentPos  = $posMap[$currentHorarioId] ?? -1;
-        $startPos    = $currentPos + 1; // empezar desde el horario SIGUIENTE
-        $fecha       = $currentFecha;
+        $total = count($horarios);
+        $currentPos = $posMap[$currentHorarioId] ?? -1;
+        $startPos = $currentPos + 1; // empezar desde el horario SIGUIENTE
+        $fecha = $currentFecha;
 
         for ($day = 0; $day < 30; $day++) {
             // Asegurarse de que la fecha sea laborable
@@ -242,17 +256,17 @@ class TicketModel
 
             for ($i = $desde; $i < $total; $i++) {
                 $h = $horarios[$i];
-                if (!$this->exists($tecnicoId, (int)$h['horario_id'], $fecha)) {
+                if (!$this->exists($tecnicoId, (int) $h['horario_id'], $fecha)) {
                     return [
-                        'fecha'      => $fecha,
+                        'fecha' => $fecha,
                         'horario_id' => (int) $h['horario_id'],
-                        'hora'       => $h['hora'],
+                        'hora' => $h['hora'],
                     ];
                 }
             }
 
             // Sin hueco este día → avanzar al siguiente laborable
-            $fecha    = $this->nextWorkdayAfter($fecha);
+            $fecha = $this->nextWorkdayAfter($fecha);
             $startPos = 0;
         }
 
@@ -281,7 +295,8 @@ class TicketModel
     public function getAvailableSlotsForReschedule(int $excludeTicketId, string $fromFecha, int $diasBusqueda = 5): array
     {
         $horarios = $this->getAllHorarios();
-        if (empty($horarios)) return [];
+        if (empty($horarios))
+            return [];
 
         // Técnicos activos
         $stmt = $this->db->query("
@@ -325,9 +340,9 @@ class TicketModel
                           AND ticket_id != :excl
                     ");
                     $stmt2->execute([
-                        ':t'    => $tecId,
-                        ':h'    => $hId,
-                        ':f'    => $fecha,
+                        ':t' => $tecId,
+                        ':h' => $hId,
+                        ':f' => $fecha,
                         ':excl' => $excludeTicketId,
                     ]);
                     $ocupado = (int) $stmt2->fetchColumn() > 0;
@@ -335,10 +350,10 @@ class TicketModel
                     if (!$ocupado) {
                         $slots[] = [
                             'horario_id' => $hId,
-                            'hora'       => $h['hora'],
-                            'fecha'      => $fecha,
-                            'fecha_fmt'  => date('d/m/Y', strtotime($fecha)),
-                            'label'      => date('d/m/Y', strtotime($fecha)) . ' — ' . $h['hora'],
+                            'hora' => $h['hora'],
+                            'fecha' => $fecha,
+                            'fecha_fmt' => date('d/m/Y', strtotime($fecha)),
+                            'label' => date('d/m/Y', strtotime($fecha)) . ' — ' . $h['hora'],
                         ];
                     }
                 }
@@ -346,10 +361,10 @@ class TicketModel
 
             if (!empty($slots)) {
                 $resultado[] = [
-                    'tecnico_id'  => $tecId,
-                    'nombre'      => $tec['TecnicoNombre'],
+                    'tecnico_id' => $tecId,
+                    'nombre' => $tec['TecnicoNombre'],
                     'zona_nombre' => $tec['zona_nombre'] ?? '',
-                    'slots'       => $slots,
+                    'slots' => $slots,
                 ];
             }
         }
