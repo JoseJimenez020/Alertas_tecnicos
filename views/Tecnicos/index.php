@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="../../assets/favicon.ico">
     <title>Gestión de Técnicos</title>
     <link rel="stylesheet" href="<?= BASE_URL ?>public/main.css">
     <style>
