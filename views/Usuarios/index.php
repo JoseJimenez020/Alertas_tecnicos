@@ -91,6 +91,7 @@
         <span>2 = Mesa de Control</span>
         <span>3 = Supervisor CC</span>
         <span>4 = Administrador</span>
+        <span>5 = Encargado de zona</span>
     </div>
 
     <button class="btn btn-primary" onclick="openCreate()" style="margin-bottom:12px;">
@@ -158,6 +159,7 @@
                 <option value="2">2 — Mesa de Control</option>
                 <option value="3">3 — Supervisor CC</option>
                 <option value="4">4 — Administrador</option>
+                <option value="5">5 — Encargado de zona</option>
             </select>
 
             <label>Color en el tablero</label>
