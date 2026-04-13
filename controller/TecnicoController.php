@@ -66,7 +66,7 @@ class TecnicoController {
         if (!$id) $this->jsonError('ID inválido.', 422);
 
         // Validar motivo
-        $valid = [null, 'apoyo', 'vacaciones'];
+        $valid = [null, 'apoyo', 'vacaciones', 'mecanico'];
         if (!in_array($motivo, $valid, true)) {
             $this->jsonError('Motivo inválido.', 422);
         }

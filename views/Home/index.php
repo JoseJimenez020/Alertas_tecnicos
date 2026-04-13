@@ -561,6 +561,7 @@ $fechaHoy     = date('Y-m-d');
                 <option value="">✅ Disponible</option>
                 <option value="apoyo">🔧 No disponible — Apoyo</option>
                 <option value="vacaciones">🏖 No disponible — Vacaciones</option>
+                <option value="mecanico">🛠 No disponible — Mecánico</option>
             </select>
         </div>
         <div class="modal-footer">
