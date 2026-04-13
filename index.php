@@ -54,6 +54,7 @@ switch ($action) {
     case 'ticket.show':       (new TicketController())->show();       break;
     case 'ticket.update':     (new TicketController())->update();     break;
     case 'ticket.reschedule': (new TicketController())->reschedule(); break;
+    case 'ticket.getSlots':   (new TicketController())->getSlots();   break;
 
     // Llamadas
     case 'llamada.upsert': (new TicketController())->upsertLlamada(); break;
