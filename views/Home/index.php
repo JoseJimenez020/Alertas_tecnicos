@@ -561,6 +561,7 @@ $fechaHoy     = date('Y-m-d');
                 <option value="">✅ Disponible</option>
                 <option value="apoyo">🔧 No disponible — Apoyo</option>
                 <option value="vacaciones">🏖 No disponible — Vacaciones</option>
+                <option value="mecanico">🛠 No disponible — Mecánico</option>
             </select>
         </div>
         <div class="modal-footer">
@@ -664,6 +665,7 @@ async function openViewMode(ticketId) {
     }
 
     let footer = `<button class="btn btn-secondary" onclick="closeModal('modalOverlay')">Cerrar</button>`;
+        footer += `<button class="btn btn-danger" onclick="deleteTicket(${t.ticket_id})">Eliminar</button>`;
     // Reagendar y Editar solo para roles que pueden operar
     if (!soloLectura) {
         footer += `<button class="btn btn-reschedule" onclick="abrirModalReagendar(${t.ticket_id}, '${t.agente_nombre}', ${t.tecnico_id})">🔄 Reagendar</button>`;
@@ -688,6 +690,26 @@ function enableEdit() {
 
 // Datos del slot seleccionado para confirmar
 let _slotPendiente = null;
+
+async function deleteTicket(ticketId) {
+    if (!confirm('¿Estás seguro de que deseas eliminar este ticket? Esta acción no se puede deshacer.')) {
+        return;
+    }
+
+    const res = await fetch(`${BASE_URL}?action=ticket.delete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ticket_id: ticketId })
+    });
+
+    const json = await res.json();
+    if (json.success) {
+        showFeedback('Ticket eliminado correctamente.', 'success');
+        setTimeout(() => location.reload(), 900);
+    } else {
+        showFeedback(json.message || 'Error al eliminar el ticket.', 'error');
+    }
+}
 
 function abrirModalReagendar(ticketId, agenteName, tecnicoIdActual) {
     // Resetear estado
