@@ -9,7 +9,7 @@ class TecnicoModel {
     /** Todos los técnicos activos con su zona */
     public function getAllActive(): array {
         $stmt = $this->db->query("
-            SELECT t.TecnicoId, t.TecnicoNombre, t.zona, t.status, t.status_motivo,
+            SELECT t.TecnicoId, t.TecnicoNombre, t.num_telefono, t.zona, t.status, t.status_motivo,
                    z.zona_nombre
             FROM tecnicos t
             LEFT JOIN zonas z ON z.zona_id = t.zona
@@ -22,7 +22,7 @@ class TecnicoModel {
     /** TODOS los técnicos (incluye inactivos) para panel de gestión */
     public function getAll(): array {
         $stmt = $this->db->query("
-            SELECT t.TecnicoId, t.TecnicoNombre, t.zona, t.status, t.status_motivo,
+            SELECT t.TecnicoId, t.TecnicoNombre, t.num_telefono, t.zona, t.status, t.status_motivo,
                    z.zona_nombre
             FROM tecnicos t
             LEFT JOIN zonas z ON z.zona_id = t.zona
@@ -57,11 +57,12 @@ class TecnicoModel {
     /** Crear técnico */
     public function create(array $data): int {
         $stmt = $this->db->prepare("
-            INSERT INTO tecnicos (TecnicoNombre, zona, status, status_motivo)
-            VALUES (:nombre, :zona, 1, NULL)
+            INSERT INTO tecnicos (TecnicoNombre, num_telefono, zona, status, status_motivo)
+            VALUES (:nombre, :telefono, :zona, 1, NULL)
         ");
         $stmt->execute([
             ':nombre' => $data['nombre'],
+            ':telefono' => $data['telefono'],
             ':zona'   => $data['zona_id'],
         ]);
         return (int) $this->db->lastInsertId();
@@ -71,11 +72,12 @@ class TecnicoModel {
     public function update(int $id, array $data): void {
         $stmt = $this->db->prepare("
             UPDATE tecnicos
-            SET TecnicoNombre = :nombre, zona = :zona
+            SET TecnicoNombre = :nombre, num_telefono = :telefono, zona = :zona
             WHERE TecnicoId = :id
         ");
         $stmt->execute([
             ':nombre' => $data['nombre'],
+            ':telefono' => $data['telefono'],
             ':zona'   => $data['zona_id'],
             ':id'     => $id,
         ]);

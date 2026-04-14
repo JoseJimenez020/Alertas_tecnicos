@@ -402,7 +402,7 @@ $fechaHoy     = date('Y-m-d');
             ?>
             <div class="<?= $liClass ?>">
                 <span class="id-num"><?= $t['TecnicoId'] ?></span>
-                <span class="list-item-nombre"><?= htmlspecialchars(strtoupper($t['TecnicoNombre'])) ?></span>
+                <span class="list-item-nombre"><?= htmlspecialchars(strtoupper($t['TecnicoNombre'])) ?> <b><?= htmlspecialchars(strtoupper($t['num_telefono'])) ?></b> </span>
                 <?php if (!$disp && $mot): ?>
                 <span class="motivo-tag">(<?= htmlspecialchars($mot) ?>)</span>
                 <?php endif; ?>
