@@ -273,7 +273,7 @@ foreach ($allTecs as $t) {
 }
 
 $rolId        = (int) $usuario['rol_id'];
-$canCreate    = in_array($rolId, [1, 2, 3]);   // rol 5 (Encargado de Zona) solo lectura
+$canCreate    = in_array($rolId, [1, 2, 3, 4]);   // rol 5 (Encargado de Zona) solo lectura
 $rolesNombres = ['','Call Center','Mesa de Control','Supervisor CC','Administrador','Encargado de Zona'];
 $fechaHoy     = date('Y-m-d');
 ?>
@@ -325,7 +325,7 @@ $fechaHoy     = date('Y-m-d');
     </div>
 
     <div id="bannerNotif">
-        <span class="banner-text">🔔 Activa las notificaciones para recibir avisos 30 min antes de cada ticket.</span>
+        <span class="banner-text">🔔 Activa las notificaciones para recibir avisos.</span>
         <button class="btn-activar" onclick="pedirPermisoNotificaciones()">🔔 Activar notificaciones</button>
         <button class="btn-dismiss" onclick="document.getElementById('bannerNotif').style.display='none'">×</button>
     </div>
@@ -581,6 +581,7 @@ $fechaHoy     = date('Y-m-d');
                 <option value="">✅ Disponible</option>
                 <option value="apoyo">🔧 No disponible — Apoyo</option>
                 <option value="vacaciones">🏖 No disponible — Vacaciones</option>
+                <option value="mecanico">No disponible - Mecánico</option>
             </select>
         </div>
         <div class="modal-footer">
@@ -692,7 +693,7 @@ async function openViewMode(ticketId) {
         // Botón Completado: verde si está terminado (permite desmarcar), gris si no
         const esTerminado = t.estado === 'terminado';
         if (esTerminado) {
-            footer += `<button class="btn btn-completado activo" onclick="toggleEstado(${t.ticket_id}, null)">✅ Completado</button>`;
+            footer += `<button class="btn btn-completado activo" onclick="toggleEstado(${t.ticket_id}, null)">Reabrir</button>`;
         } else {
             footer += `<button class="btn btn-completado" onclick="toggleEstado(${t.ticket_id}, 'terminado')">Terminar</button>`;
         }

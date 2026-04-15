@@ -75,7 +75,7 @@ class TecnicoModel
         $stmt = $this->db->prepare("
             UPDATE tecnicos
             SET TecnicoNombre = :nombre,
-                telefono      = :telefono,
+                num_telefono      = :telefono,
                 zona          = :zona
             WHERE TecnicoId = :id
         ");

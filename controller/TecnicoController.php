@@ -58,7 +58,7 @@ class TecnicoController
         $motivo = $body['motivo'] ?? null;
         if (!$id)
             $this->jsonError('ID inválido.', 422);
-        if (!in_array($motivo, [null, 'apoyo', 'vacaciones'], true))
+        if (!in_array($motivo, [null, 'apoyo', 'vacaciones', 'mecanico'], true))
             $this->jsonError('Motivo inválido.', 422);
 
         $model = new TecnicoModel();
