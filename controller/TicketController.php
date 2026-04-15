@@ -243,6 +243,37 @@ class TicketController
         $model->delete($id);
         $this->jsonSuccess(['deleted' => true]);
     }
+
+    public function search(): void
+    {
+        header('Content-Type: application/json; charset=utf-8');
+        $usuario = $_SESSION['usuario'];
+        if (!in_array($usuario['rol_id'], [1, 2, 3, 4, 5]))
+            $this->jsonError('Sin permisos.', 403);
+
+        $q = trim($_GET['q'] ?? '');
+        if ($q === '')
+            $this->jsonError('Ingresa un número de ticket.', 422);
+
+        $db = Database::getInstance()->getConnection();
+        $stmt = $db->prepare("
+        SELECT tt.ticket_id, tt.Ticket, tt.fecha, tt.tecnico_id, tt.horario_id,
+               tt.Cliente, tt.Descripcion,
+               tec.TecnicoNombre AS tecnico_nombre,
+               TIME_FORMAT(h.hora, '%H:%i') AS hora
+        FROM tm_ticket tt
+        JOIN tecnicos tec ON tec.TecnicoId = tt.tecnico_id
+        JOIN horarios h   ON h.horario_id  = tt.horario_id
+        WHERE tt.Ticket LIKE :q
+        ORDER BY tt.fecha DESC
+        LIMIT 10
+    ");
+        $stmt->execute([':q' => '%' . $q . '%']);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $this->jsonSuccess(['results' => $rows]);
+    }
+
     /* ── Helpers ──────────────────────────────────────────────────── */
 
 

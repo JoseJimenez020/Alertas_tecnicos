@@ -54,6 +54,9 @@ switch ($action) {
     case 'ticket.store':
         (new TicketController())->store();
         break;
+    case 'ticket.search':
+        (new TicketController())->search();
+        break;
     case 'ticket.show':
         (new TicketController())->show();
         break;

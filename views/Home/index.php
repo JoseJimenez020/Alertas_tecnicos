@@ -227,6 +227,50 @@
             margin-top: 8px;
         }
         .btn-auto-reschedule:hover { background: #e8f1f8; }
+
+        /* ── Buscador de tickets ─────────────────────────────────── */
+        .buscador-wrap {
+            display: none; /* se muestra solo a rol 4 y 5 via JS/PHP */
+            align-items: center; gap: 6px;
+        }
+        .buscador-wrap input[type="text"] {
+            padding: 4px 8px; font-size: 12px; border: 1px solid #ccc;
+            width: 170px; box-sizing: border-box;
+        }
+        .buscador-wrap button {
+            padding: 5px 10px; background: #1a4d6d; color: #fff;
+            border: none; cursor: pointer; font-size: 12px;
+        }
+        .buscador-wrap button:hover { background: #245f85; }
+
+        /* Dropdown de resultados de búsqueda */
+        .search-dropdown {
+            position: absolute; top: 100%; right: 0;
+            background: #fff; border: 1px solid #ccc;
+            box-shadow: 0 4px 14px rgba(0,0,0,.18);
+            min-width: 340px; z-index: 600; max-height: 260px;
+            overflow-y: auto; display: none;
+        }
+        .search-dropdown.open { display: block; }
+        .search-result-item {
+            padding: 8px 12px; cursor: pointer; font-size: 11px;
+            border-bottom: 1px solid #eee;
+        }
+        .search-result-item:hover { background: #f0f5ff; }
+        .search-result-item .sri-ticket { font-weight: bold; color: #1a4d6d; }
+        .search-result-item .sri-meta { color: #666; margin-top: 2px; }
+        .search-no-results {
+            padding: 10px 12px; font-size: 11px; color: #888; text-align: center;
+        }
+
+        /* Efecto de pulso que domina sobre cualquier estado (terminado o rojo) */
+        td.cell-highlight-strong,
+        td.cell-ticket.estado-terminado.cell-highlight-strong,
+        td.cell-ticket.estado-rojo.cell-highlight-strong {
+            background-color: #FF4500 !important;
+            box-shadow: inset 0 0 15px rgba(255, 255, 255, 0.6), 0 0 12px #FF4500 !important;
+            border: 1px solid #FFF !important;
+        }
     </style>
 </head>
 <body>
@@ -293,7 +337,16 @@ $fechaHoy     = date('Y-m-d');
                        style="padding:4px 6px;font-size:12px;border:1px solid #ccc;">
                 <button type="submit" class="btn btn-primary" style="padding:5px 10px;">Ver</button>
             </form>
-
+            <?php if (in_array($rolId, [1, 2, 3, 4, 5])): ?>
+            <div class="dropdown" id="searchDropdown" style="position:relative;">
+                <div class="buscador-wrap" style="display:flex;">
+                    <input type="text" id="searchTicketInput" placeholder="Buscar num. ticket…"
+                        onkeydown="if(event.key==='Enter') buscarTicket()">
+                    <button onclick="buscarTicket()">🔍</button>
+                </div>
+                <div class="search-dropdown" id="searchDropdownMenu"></div>
+            </div>
+            <?php endif; ?>
             <div class="dropdown" id="menuDropdown">
                 <button class="dropdown-toggle" onclick="toggleMenu(event)">☰ Menú</button>
                 <div class="dropdown-menu" id="dropdownMenu">
@@ -1140,7 +1193,88 @@ async function toggleEstado(ticketId, nuevoEstado) {
         showFeedback(json.message || 'Error al cambiar el estado.', 'error');
     }
 }
+/* ══════════════════════════════════════════════════════════
+   BUSCADOR DE TICKETS (rol 4 y 5)
+══════════════════════════════════════════════════════════ */
+async function buscarTicket() {
+    const q = document.getElementById('searchTicketInput')?.value.trim();
+    if (!q) return;
 
+    const menu = document.getElementById('searchDropdownMenu');
+    menu.innerHTML = '<div class="search-no-results">⏳ Buscando...</div>';
+    menu.classList.add('open');
+
+    try {
+        const res  = await fetch(`${BASE_URL}?action=ticket.search&q=${encodeURIComponent(q)}`, { cache: 'no-store' });
+        const json = await res.json();
+
+        if (!json.success || !json.data.results.length) {
+            menu.innerHTML = '<div class="search-no-results">No se encontraron tickets.</div>';
+            return;
+        }
+
+        menu.innerHTML = json.data.results.map(r => `
+            <div class="search-result-item"
+                 onclick="irATicket('${r.fecha}', ${r.tecnico_id}, ${r.horario_id})">
+                <div class="sri-ticket">🎫 ${r.Ticket}</div>
+                <div class="sri-meta">
+                    ${r.tecnico_nombre} &nbsp;|&nbsp; ${formatDate(r.fecha)} ${r.hora} hrs
+                    &nbsp;|&nbsp; ${r.Cliente}
+                </div>
+            </div>
+        `).join('');
+    } catch {
+        menu.innerHTML = '<div class="search-no-results">Error al buscar.</div>';
+    }
+}
+
+function irATicket(fecha, tecnicoId, horarioId) {
+    document.getElementById('searchDropdownMenu').classList.remove('open');
+    // Navegar al tablero en la fecha del ticket con parámetros de highlight
+    window.location.href = `${BASE_URL}?action=tablero&fecha=${fecha}&hl_tec=${tecnicoId}&hl_hor=${horarioId}`;
+}
+
+// Cerrar dropdown de búsqueda al hacer clic fuera
+document.addEventListener('click', e => {
+    const wrap = document.getElementById('searchDropdown');
+    if (wrap && !wrap.contains(e.target)) {
+        document.getElementById('searchDropdownMenu')?.classList.remove('open');
+    }
+});
+
+// Al cargar, si hay parámetros hl_tec y hl_hor, parpadear la celda
+(function highlightOnLoad() {
+    const params   = new URLSearchParams(window.location.search);
+    const hlTec    = params.get('hl_tec');
+    const hlHor    = params.get('hl_hor');
+    if (!hlTec || !hlHor) return;
+
+    // Buscar la celda por data attributes
+    const celda = document.querySelector(
+        `td[data-tecnico-id="${hlTec}"][data-horario-id="${hlHor}"]`
+    );
+    if (!celda) return;
+
+    // Scroll a la celda centrada en la pantalla
+    celda.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    // Parpadeo controlado por JavaScript (evita conflictos de CSS !important)
+    let parpadeos = 0;
+    const maxParpadeos = 21; // 21 ciclos de 500ms = 10.5 segundos exactos
+    
+    // Iniciar con la clase activada
+    celda.classList.add('cell-highlight-strong');
+    
+    const intervalo = setInterval(() => {
+        celda.classList.toggle('cell-highlight-strong');
+        parpadeos++;
+        
+        if (parpadeos >= maxParpadeos) {
+            clearInterval(intervalo);
+            celda.classList.remove('cell-highlight-strong');
+        }
+    }, 500);
+})();
 inicializarNotificaciones();
 </script>
 </body>
