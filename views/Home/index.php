@@ -77,6 +77,10 @@
         /* Estado terminado: fondo verde en la celda */
         td.cell-ticket.estado-terminado { background-color: #d4edda !important; }
         td.cell-ticket.estado-terminado:hover { background-color: #c3e6cb !important; }
+        /* 1 llamada sin terminar: fondo verde en la celda */
+        td.cell-ticket.estado-primera-llamada { background-color: #637052 !important; }
+        /* 2 llamadas sin terminar: fondo naranja en la celda */
+        td.cell-ticket.estado-segunda-llamada { background-color: #E48312 !important; }
         /* 3 llamadas sin terminar: fondo rojo en la celda */
         td.cell-ticket.estado-rojo { background-color: #fa2e2e !important; }
         td.cell-ticket.estado-rojo:hover { background-color: #f5c6cb !important; }
@@ -265,6 +269,8 @@
 
         /* Efecto de pulso que domina sobre cualquier estado (terminado o rojo) */
         td.cell-highlight-strong,
+        td.cell-ticket.estado-primera-llamada.cell-highlight-strong,
+        td.cell-ticket.estado-segunda-llamada.cell-highlight-strong,
         td.cell-ticket.estado-terminado.cell-highlight-strong,
         td.cell-ticket.estado-rojo.cell-highlight-strong {
             background-color: #FF4500 !important;
@@ -426,12 +432,18 @@ $fechaHoy     = date('Y-m-d');
                     $hasTicket  = $ticket !== null;
                     if (!$disponible): echo '<td class="cell-nodisponible"></td>'; continue; endif;
                     $cellClass = 'cell-ticket' . ($hasTicket ? ' occupied' : '');
-                    // Color de celda: verde si terminado, rojo si 3 llamadas sin terminar
+                    // Lógica para los estados del ticket
                     if ($hasTicket) {
+                        $numLlamadas = (int)($ticket['total_llamadas'] ?? 0);
                         if (($ticket['estado'] ?? '') === 'terminado') {
+                            // El estado terminado tiene prioridad máxima de color
                             $cellClass .= ' estado-terminado';
-                        } elseif ((int)($ticket['total_llamadas'] ?? 0) >= 3) {
+                        } elseif ($numLlamadas >= 3) {
                             $cellClass .= ' estado-rojo';
+                        } elseif ($numLlamadas === 2) {
+                            $cellClass .= ' estado-segunda-llamada';
+                        } elseif ($numLlamadas === 1) {
+                            $cellClass .= ' estado-primera-llamada';
                         }
                     }
                 ?>
