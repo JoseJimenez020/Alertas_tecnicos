@@ -12,7 +12,6 @@ header('X-XSS-Protection: 1; mode=block');
 header('Referrer-Policy: strict-origin-when-cross-origin');
 header("Content-Security-Policy: default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'");
 
-// ── Autoloads ────────────────────────────────────────────────────────
 require_once BASE_PATH . '/config/database.php';
 require_once BASE_PATH . '/models/TicketModel.php';
 require_once BASE_PATH . '/models/TecnicoModel.php';
@@ -30,7 +29,6 @@ require_once BASE_PATH . '/controller/NotifController.php';
 $action = $_GET['action'] ?? 'tablero';
 $ip = Security::clientIp();
 
-// ── Rutas públicas ───────────────────────────────────────────────────
 if ($action === 'login') {
     (new AuthController())->login();
     exit;
@@ -40,7 +38,6 @@ if ($action === 'logout') {
     exit;
 }
 
-// ── Validar sesión ───────────────────────────────────────────────────
 if (!Security::validateSession($ip)) {
     $msg = isset($_SESSION['usuario']) ? '?action=login&msg=expired' : '?action=login';
     Security::destroySession();
@@ -49,14 +46,11 @@ if (!Security::validateSession($ip)) {
     exit;
 }
 
-// ── Enrutador ────────────────────────────────────────────────────────
 switch ($action) {
-
     case 'tablero':
         (new TableroController())->index();
         break;
 
-    // Tickets
     case 'ticket.store':
         (new TicketController())->store();
         break;
@@ -68,27 +62,29 @@ switch ($action) {
         break;
     case 'ticket.delete':
         (new TicketController())->delete();
-        break;
     case 'ticket.reschedule':
         (new TicketController())->reschedule();
         break;
     case 'ticket.getSlots':
         (new TicketController())->getSlots();
         break;
+    case 'ticket.setEstado':
+        (new TicketController())->setEstado();
+        break;
 
-    // Llamadas
     case 'llamada.upsert':
         (new TicketController())->upsertLlamada();
         break;
 
-    // Notificaciones (polling JS)
     case 'notif.tickets':
         (new NotifController())->tickets();
         break;
 
-    // Admin: Usuarios (rol 4)
     case 'admin.usuarios':
         (new AdminController())->usuarios();
+        break;
+    case 'admin.reporte':
+        (new AdminController())->reporte();
         break;
     case 'admin.usuario.store':
         (new AdminController())->storeUsuario();
@@ -100,7 +96,6 @@ switch ($action) {
         (new AdminController())->deleteUsuario();
         break;
 
-    // Técnicos (rol 2)
     case 'tecnicos.panel':
         (new TecnicoController())->panel();
         break;
@@ -117,7 +112,6 @@ switch ($action) {
         (new TecnicoController())->delete();
         break;
 
-    // Horarios (rol 2 y 4)
     case 'horarios.panel':
         (new HorarioController())->panel();
         break;

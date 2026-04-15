@@ -29,25 +29,18 @@
         tr:nth-child(even) { background:#f5f5f5; }
         tr.inactivo td { color:#888; }
 
-        .badge {
-            display:inline-block; padding:2px 8px; border-radius:10px;
-            font-size:10px; font-weight:bold;
-        }
+        .badge { display:inline-block; padding:2px 8px; border-radius:10px; font-size:10px; font-weight:bold; }
         .badge-activo    { background:#d4edda; color:#155724; }
         .badge-apoyo     { background:#fff3cd; color:#856404; }
         .badge-vacaciones{ background:#cce5ff; color:#004085; }
 
-        /* Modal */
         .modal-overlay {
             display:none; position:fixed; inset:0;
             background:rgba(0,0,0,.45); z-index:1000;
             align-items:center; justify-content:center;
         }
         .modal-overlay.open { display:flex; }
-        .modal-box {
-            background:#fff; width:420px; max-width:96vw;
-            box-shadow:0 8px 32px rgba(0,0,0,.22);
-        }
+        .modal-box { background:#fff; width:420px; max-width:96vw; box-shadow:0 8px 32px rgba(0,0,0,.22); }
         .modal-header {
             background:#1a4d6d; color:#fff; padding:12px 18px;
             display:flex; justify-content:space-between; align-items:center;
@@ -61,8 +54,7 @@
             width:100%; box-sizing:border-box; padding:7px 9px;
             border:1px solid #ccc; font-size:12px;
         }
-        .modal-footer { padding:12px 18px; background:#f5f5f5;
-            display:flex; justify-content:flex-end; gap:8px; }
+        .modal-footer { padding:12px 18px; background:#f5f5f5; display:flex; justify-content:flex-end; gap:8px; }
         .feedback { font-size:11px; padding:6px 10px; margin-bottom:8px; display:none; }
         .feedback.success { background:#d4edda; color:#155724; display:block; }
         .feedback.error   { background:#f8d7da; color:#721c24; display:block; }
@@ -86,6 +78,7 @@
             <tr>
                 <th>ID</th>
                 <th>Nombre</th>
+                <th>Teléfono</th>
                 <th>Zona</th>
                 <th>Status</th>
                 <th>Acciones</th>
@@ -101,6 +94,7 @@
         <tr class="<?= !$activo ? 'inactivo' : '' ?>">
             <td><?= $t['TecnicoId'] ?></td>
             <td><?= htmlspecialchars($t['TecnicoNombre']) ?></td>
+            <td><?= htmlspecialchars($t['telefono'] ?? '—') ?></td>
             <td><?= htmlspecialchars($t['zona_nombre'] ?? '—') ?></td>
             <td><span class="badge <?= $badgeClass ?>"><?= $badgeLabel ?></span></td>
             <td>
@@ -128,10 +122,10 @@
         <div class="modal-body">
             <div class="feedback" id="tecnicoFeedback"></div>
             <input type="hidden" id="tId">
-
             <label>Nombre completo</label>
             <input type="text" id="tNombre" maxlength="255" placeholder="Nombre del técnico">
-
+            <label>Teléfono</label>
+            <input type="tel" id="tTelefono" maxlength="15" placeholder="Ej. 9931234567">
             <label>Zona</label>
             <select id="tZona">
                 <?php foreach ($zonas as $z): ?>
@@ -157,7 +151,6 @@
             <div class="feedback" id="statusFeedback"></div>
             <input type="hidden" id="sId">
             <p id="sNombre" style="font-weight:bold;margin:0 0 12px;font-size:13px;"></p>
-
             <label>Estado</label>
             <select id="sMotivo">
                 <option value="">✅ Disponible</option>
@@ -180,9 +173,10 @@ function openCreate() {
     modoEdicion = false;
     limpiar('tecnicoFeedback');
     document.getElementById('modalTecnicoTitle').textContent = 'Nuevo Técnico';
-    document.getElementById('tId').value     = '';
-    document.getElementById('tNombre').value = '';
-    document.getElementById('tZona').value   = document.getElementById('tZona').options[0]?.value || '';
+    document.getElementById('tId').value       = '';
+    document.getElementById('tNombre').value   = '';
+    document.getElementById('tTelefono').value = '';
+    document.getElementById('tZona').value     = document.getElementById('tZona').options[0]?.value || '';
     document.getElementById('modalTecnico').classList.add('open');
 }
 
@@ -190,17 +184,18 @@ function openEdit(t) {
     modoEdicion = true;
     limpiar('tecnicoFeedback');
     document.getElementById('modalTecnicoTitle').textContent = 'Editar Técnico';
-    document.getElementById('tId').value     = t.TecnicoId;
-    document.getElementById('tNombre').value = t.TecnicoNombre;
-    document.getElementById('tZona').value   = t.zona;
+    document.getElementById('tId').value       = t.TecnicoId;
+    document.getElementById('tNombre').value   = t.TecnicoNombre;
+    document.getElementById('tTelefono').value = t.telefono || '';
+    document.getElementById('tZona').value     = t.zona;
     document.getElementById('modalTecnico').classList.add('open');
 }
 
 function openStatus(t) {
     limpiar('statusFeedback');
-    document.getElementById('sId').value       = t.TecnicoId;
-    document.getElementById('sNombre').textContent = t.TecnicoNombre;
-    document.getElementById('sMotivo').value   = t.status_motivo || '';
+    document.getElementById('sId').value              = t.TecnicoId;
+    document.getElementById('sNombre').textContent    = t.TecnicoNombre;
+    document.getElementById('sMotivo').value          = t.status_motivo || '';
     document.getElementById('modalStatus').classList.add('open');
 }
 
@@ -209,20 +204,20 @@ function cerrarModal(id) {
 }
 
 async function guardarTecnico() {
-    const id     = document.getElementById('tId').value;
-    const nombre = document.getElementById('tNombre').value.trim();
-    const zona   = document.getElementById('tZona').value;
+    const id       = document.getElementById('tId').value;
+    const nombre   = document.getElementById('tNombre').value.trim();
+    const telefono = document.getElementById('tTelefono').value.trim();
+    const zona     = document.getElementById('tZona').value;
 
     if (!nombre || !zona) { mostrarFeedback('tecnicoFeedback', 'Nombre y zona son obligatorios.', 'error'); return; }
 
     const action  = modoEdicion ? 'tecnico.update' : 'tecnico.store';
     const payload = modoEdicion
-        ? { tecnico_id: parseInt(id), nombre, zona_id: parseInt(zona) }
-        : { nombre, zona_id: parseInt(zona) };
+        ? { tecnico_id: parseInt(id), nombre, telefono, zona_id: parseInt(zona) }
+        : { nombre, telefono, zona_id: parseInt(zona) };
 
     const res  = await fetch(`${BASE_URL}?action=${action}`, {
-        method: 'POST', headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(payload),
+        method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload),
     });
     const json = await res.json();
     if (json.success) {
@@ -237,8 +232,8 @@ async function guardarStatus() {
     const id     = parseInt(document.getElementById('sId').value);
     const motivo = document.getElementById('sMotivo').value || null;
     const res  = await fetch(`${BASE_URL}?action=tecnico.status`, {
-        method: 'POST', headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ tecnico_id: id, motivo }),
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({ tecnico_id: id, motivo }),
     });
     const json = await res.json();
     if (json.success) {
@@ -252,8 +247,8 @@ async function guardarStatus() {
 async function confirmDelete(id, nombre) {
     if (!confirm(`¿Eliminar al técnico "${nombre}"?\nSolo es posible si no tiene tickets registrados.`)) return;
     const res  = await fetch(`${BASE_URL}?action=tecnico.delete`, {
-        method: 'POST', headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ tecnico_id: id }),
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({ tecnico_id: id }),
     });
     const json = await res.json();
     if (json.success) location.reload();
@@ -264,13 +259,11 @@ function limpiar(fbId) {
     const el = document.getElementById(fbId);
     if (el) { el.className = 'feedback'; el.textContent = ''; }
 }
-
 function mostrarFeedback(fbId, msg, tipo) {
     const el = document.getElementById(fbId);
     el.textContent = msg; el.className = 'feedback ' + tipo;
 }
 
-// Cerrar al hacer clic fuera
 ['modalTecnico','modalStatus'].forEach(id => {
     document.getElementById(id).addEventListener('click', function(e) {
         if (e.target === this) cerrarModal(id);

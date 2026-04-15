@@ -74,6 +74,13 @@
         td.cell-ticket { cursor: pointer; position: relative; }
         td.cell-ticket:hover { background: #f0f7ff; }
         td.cell-ticket.occupied { cursor: pointer; }
+        /* Estado terminado: fondo verde en la celda */
+        td.cell-ticket.estado-terminado { background-color: #d4edda !important; }
+        td.cell-ticket.estado-terminado:hover { background-color: #c3e6cb !important; }
+        /* 3 llamadas sin terminar: fondo rojo en la celda */
+        td.cell-ticket.estado-rojo { background-color: #fa2e2e !important; }
+        td.cell-ticket.estado-rojo:hover { background-color: #f5c6cb !important; }
+        /* El ícono (círculo/cuadrado) lleva su propio color inline — no hereda el fondo */
         .icon-wrap { display: flex; align-items: center; justify-content: center; height: 100%; }
         th.col-nodisponible { background-color: #156082 !important; color: #fff !important; }
         .badge-nodisponible {
@@ -132,6 +139,10 @@
         .btn-reschedule { background: #6f42c1; color: #fff; }
         .btn-reschedule:hover { background: #5a32a3; }
         .btn-reschedule:disabled { background: #b39ddb; cursor: not-allowed; }
+        /* Botón Completado */
+        .btn-completado { background: #28a745; color: #fff; }
+        .btn-completado:hover { background: #218838; }
+        .btn-completado.activo { background: #1e7145; box-shadow: inset 0 0 0 2px rgba(255,255,255,.4); }
 
         .modal-meta {
             font-size: 11px; color: #1a4d6d; background: #e8f1f8;
@@ -295,6 +306,7 @@ $fechaHoy     = date('Y-m-d');
                     <?php endif; ?>
                     <?php if ($rolId === 4): ?>
                     <a href="?action=admin.usuarios">👥 Gestión de Usuarios</a>
+                    <a href="?action=admin.reporte">📊 Reporte de Tickets</a>
                     <?php endif; ?>
                     <div class="menu-section">Sesión</div>
                     <button class="menu-btn" onclick="document.getElementById('frmLogout').submit()">
@@ -361,6 +373,14 @@ $fechaHoy     = date('Y-m-d');
                     $hasTicket  = $ticket !== null;
                     if (!$disponible): echo '<td class="cell-nodisponible"></td>'; continue; endif;
                     $cellClass = 'cell-ticket' . ($hasTicket ? ' occupied' : '');
+                    // Color de celda: verde si terminado, rojo si 3 llamadas sin terminar
+                    if ($hasTicket) {
+                        if (($ticket['estado'] ?? '') === 'terminado') {
+                            $cellClass .= ' estado-terminado';
+                        } elseif ((int)($ticket['total_llamadas'] ?? 0) >= 3) {
+                            $cellClass .= ' estado-rojo';
+                        }
+                    }
                 ?>
                 <td class="<?= $cellClass ?>"
                     data-tecnico-id="<?= $t['TecnicoId'] ?>"
@@ -561,7 +581,6 @@ $fechaHoy     = date('Y-m-d');
                 <option value="">✅ Disponible</option>
                 <option value="apoyo">🔧 No disponible — Apoyo</option>
                 <option value="vacaciones">🏖 No disponible — Vacaciones</option>
-                <option value="mecanico">🛠 No disponible — Mecánico</option>
             </select>
         </div>
         <div class="modal-footer">
@@ -664,12 +683,19 @@ async function openViewMode(ticketId) {
         }
     }
 
-    let footer = `<button class="btn btn-secondary" onclick="closeModal('modalOverlay')">Cerrar</button>`;
+    let footer = `<button class="btn btn-secondary" onclick="closeModal('modalOverlay')">Cerrar</button>`;    
         footer += `<button class="btn btn-danger" onclick="deleteTicket(${t.ticket_id})">Eliminar</button>`;
     // Reagendar y Editar solo para roles que pueden operar
     if (!soloLectura) {
         footer += `<button class="btn btn-reschedule" onclick="abrirModalReagendar(${t.ticket_id}, '${t.agente_nombre}', ${t.tecnico_id})">🔄 Reagendar</button>`;
         if (t.can_edit) footer += `<button class="btn btn-warning" onclick="enableEdit()">Editar</button>`;
+        // Botón Completado: verde si está terminado (permite desmarcar), gris si no
+        const esTerminado = t.estado === 'terminado';
+        if (esTerminado) {
+            footer += `<button class="btn btn-completado activo" onclick="toggleEstado(${t.ticket_id}, null)">✅ Completado</button>`;
+        } else {
+            footer += `<button class="btn btn-completado" onclick="toggleEstado(${t.ticket_id}, 'terminado')">Terminar</button>`;
+        }
     }
     document.getElementById('modalFooter').innerHTML = footer;
     openModal('modalOverlay');
@@ -690,26 +716,6 @@ function enableEdit() {
 
 // Datos del slot seleccionado para confirmar
 let _slotPendiente = null;
-
-async function deleteTicket(ticketId) {
-    if (!confirm('¿Estás seguro de que deseas eliminar este ticket? Esta acción no se puede deshacer.')) {
-        return;
-    }
-
-    const res = await fetch(`${BASE_URL}?action=ticket.delete`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ticket_id: ticketId })
-    });
-
-    const json = await res.json();
-    if (json.success) {
-        showFeedback('Ticket eliminado correctamente.', 'success');
-        setTimeout(() => location.reload(), 900);
-    } else {
-        showFeedback(json.message || 'Error al eliminar el ticket.', 'error');
-    }
-}
 
 function abrirModalReagendar(ticketId, agenteName, tecnicoIdActual) {
     // Resetear estado
@@ -1114,6 +1120,24 @@ async function pedirPermisoNotificaciones() {
     const result = await Notification.requestPermission();
     document.getElementById('bannerNotif').style.display = 'none';
     if (result === 'granted') { verificarAlertas(); setInterval(verificarAlertas, 30000); }
+}
+
+/* ══════════════════════════════════════════════════════════
+   ESTADO DEL TICKET (Completado / Revertir)
+══════════════════════════════════════════════════════════ */
+async function toggleEstado(ticketId, nuevoEstado) {
+    const res  = await fetch(`${BASE_URL}?action=ticket.setEstado`, {
+        method : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body   : JSON.stringify({ ticket_id: ticketId, estado: nuevoEstado }),
+    });
+    const json = await res.json();
+    if (json.success) {
+        // Recargar para actualizar el color de la celda en el tablero
+        location.reload();
+    } else {
+        showFeedback(json.message || 'Error al cambiar el estado.', 'error');
+    }
 }
 
 inicializarNotificaciones();
