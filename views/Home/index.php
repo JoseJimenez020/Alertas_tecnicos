@@ -783,6 +783,26 @@ function enableEdit() {
 // Datos del slot seleccionado para confirmar
 let _slotPendiente = null;
 
+async function deleteTicket(ticketId) {
+    if (!confirm('¿Estás seguro de que deseas eliminar este ticket? Esta acción no se puede deshacer.')) {
+        return;
+    }
+
+    const res = await fetch(`${BASE_URL}?action=ticket.delete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ticket_id: ticketId })
+    });
+
+    const json = await res.json();
+    if (json.success) {
+        showFeedback('Ticket eliminado correctamente.', 'success');
+        setTimeout(() => location.reload(), 900);
+    } else {
+        showFeedback(json.message || 'Error al eliminar el ticket.', 'error');
+    }
+}
+
 function abrirModalReagendar(ticketId, agenteName, tecnicoIdActual) {
     // Resetear estado
     _slotPendiente = null;

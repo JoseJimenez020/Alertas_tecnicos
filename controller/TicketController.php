@@ -18,7 +18,7 @@ class TicketController
             $this->jsonError('El teléfono debe tener 10 dígitos numéricos.', 422);
 
         $dow = (int) date('w', strtotime($body['fecha']));
-        if ($dow === 0 || $dow === 7)
+        if ($dow === 0 || $dow === 6)
             $this->jsonError('No se pueden asignar tickets en domingo.', 422);
 
         $model = new TicketModel();
@@ -155,8 +155,8 @@ class TicketController
             $newFecha = $body['fecha'];
 
             $dow = (int) date('w', strtotime($newFecha));
-            if ($dow === 0 || $dow === 6)
-                $this->jsonError('No se pueden asignar tickets en sábado ni domingo.', 422);
+            if ($dow === 0)
+                $this->jsonError('No se pueden asignar tickets en domingo.', 422);
 
             $stmt = Database::getInstance()->getConnection()->prepare("
                 SELECT COUNT(*) FROM tm_ticket

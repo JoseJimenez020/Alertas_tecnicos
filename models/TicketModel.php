@@ -238,7 +238,6 @@ class TicketModel
     {
         $dow = (int) date('w', strtotime($fecha));
         if ($dow === 0) return date('Y-m-d', strtotime($fecha . ' +1 day'));
-        if ($dow === 6) return date('Y-m-d', strtotime($fecha . ' +2 days'));
         return $fecha;
     }
 
@@ -251,7 +250,7 @@ class TicketModel
     private function isWorkday(string $fecha): bool
     {
         $dow = (int) date('w', strtotime($fecha));
-        return $dow >= 1 && $dow <= 5;
+        return $dow >= 1 && $dow <= 6;
     }
 
     private function getAllHorarios(): array
