@@ -277,6 +277,27 @@
             box-shadow: inset 0 0 15px rgba(255, 255, 255, 0.6), 0 0 12px #FF4500 !important;
             border: 1px solid #FFF !important;
         }
+         .horas-grid-sm {
+            display:grid; grid-template-columns:repeat(4,1fr); gap:5px; margin-top:6px;
+        }
+        .hora-check-sm {
+            display:flex; align-items:center; justify-content:center;
+            font-size:11px; cursor:pointer; padding:4px 6px;
+            border:1px solid #ccc; border-radius:3px; user-select:none;
+            transition:background .1s; text-align:center;
+        }
+        .hora-check-sm input { display:none; }
+        .hora-check-sm.selected { background:#1a4d6d; color:#fff; border-color:#1a4d6d; }
+        .hora-check-sm.todas-sm {
+            grid-column:1/-1; background:#f0f5ff;
+            border-color:#1a4d6d; color:#1a4d6d; font-weight:bold;
+        }
+        .hora-check-sm.todas-sm.selected { background:#1a4d6d; color:#fff; }
+        .fechas-row-sm { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+        .campos-motivo-t { display:none; }
+        .campos-motivo-t.visible { display:block; }
+        .campos-horas-t { display:none; }
+        .campos-horas-t.visible { display:block; }
     </style>
 </head>
 <body>
@@ -406,19 +427,31 @@ $fechaHoy     = date('Y-m-d');
                 <?php endforeach; ?>
             </tr>
             <tr>
+
                 <?php foreach ($tecnicosSorted as $t):
+                    $tecId_h    = (int)$t['TecnicoId'];
                     $disponible = (int)$t['status'] === 1;
                     $motivo     = $t['status_motivo'] ?? '';
-                    $thClass    = $disponible ? '' : 'col-nodisponible';
+                    // El encabezado se marca azul solo si hay bloqueo TOTAL del día
+                    // o el técnico está globalmente inactivo
+                    $bloqueadoHoy = !$disponible
+                        || !empty($bloqueosCelda[$tecId_h]['_todo']);
+                    $thClass = $bloqueadoHoy ? 'col-nodisponible' : '';
+                    // Etiqueta de motivo: tomar del bloqueo activo si existe
+                    $motivoLabel = $motivo;
+                    if (!$motivoLabel && !empty($bloquesDia[$tecId_h][0]['motivo'])) {
+                        $motivoLabel = $bloquesDia[$tecId_h][0]['motivo'];
+                    }
                 ?>
                 <th class="<?= $thClass ?>" title="<?= htmlspecialchars($t['TecnicoNombre']) ?>">
                     <?= $t['TecnicoId'] ?>
-                    <?php if (!$disponible): ?>
+                    <?php if ($bloqueadoHoy): ?>
                     <span class="badge-nodisponible">
-                        <?= $motivo ? htmlspecialchars(ucfirst($motivo)) : 'No disp.' ?>
+                        <?= $motivoLabel ? htmlspecialchars(ucfirst($motivoLabel)) : 'No disp.' ?>
                     </span>
                     <?php endif; ?>
                 </th>
+
                 <?php endforeach; ?>
             </tr>
         </thead>
@@ -426,17 +459,28 @@ $fechaHoy     = date('Y-m-d');
         <?php foreach ($horarios as $h): ?>
             <tr>
                 <td><?= htmlspecialchars(substr($h['hora'],0,5)) ?></td>
+
                 <?php foreach ($tecnicosSorted as $t):
-                    $disponible = (int)$t['status'] === 1;
-                    $ticket     = $tickets[$t['TecnicoId']][$h['horario_id']] ?? null;
-                    $hasTicket  = $ticket !== null;
-                    if (!$disponible): echo '<td class="cell-nodisponible"></td>'; continue; endif;
+                    $tecId      = (int)$t['TecnicoId'];
+                    $hId        = (int)$h['horario_id'];
+
+                    // ── Verificar si la CELDA está bloqueada ──────────────────
+                    // Prioridad: status=0 (inactivo global) ó bloqueo específico de fecha/hora
+                    $statusInactivo   = (int)$t['status'] !== 1;
+                    $bloqueTotal      = !empty($bloqueosCelda[$tecId]['_todo']);
+                    $bloqueEstaHora   = !empty($bloqueosCelda[$tecId][$hId]);
+                    $celdaBloqueada   = $statusInactivo || $bloqueTotal || $bloqueEstaHora;
+
+                    $ticket    = $tickets[$tecId][$hId] ?? null;
+                    $hasTicket = $ticket !== null;
+
+                    if ($celdaBloqueada): echo '<td class="cell-nodisponible"></td>'; continue; endif;
+
                     $cellClass = 'cell-ticket' . ($hasTicket ? ' occupied' : '');
                     // Lógica para los estados del ticket
                     if ($hasTicket) {
                         $numLlamadas = (int)($ticket['total_llamadas'] ?? 0);
                         if (($ticket['estado'] ?? '') === 'terminado') {
-                            // El estado terminado tiene prioridad máxima de color
                             $cellClass .= ' estado-terminado';
                         } elseif ($numLlamadas >= 3) {
                             $cellClass .= ' estado-rojo';
@@ -447,6 +491,7 @@ $fechaHoy     = date('Y-m-d');
                         }
                     }
                 ?>
+
                 <td class="<?= $cellClass ?>"
                     data-tecnico-id="<?= $t['TecnicoId'] ?>"
                     data-tecnico-nombre="<?= htmlspecialchars($t['TecnicoNombre']) ?>"
@@ -630,37 +675,66 @@ $fechaHoy     = date('Y-m-d');
     </div>
 </div>
 
-<!-- ══════════════════ MODAL DISPONIBILIDAD TÉCNICO ══════════════════ -->
-<div class="modal-overlay" id="modalTecnico">
-    <div class="modal-box" style="width:360px;">
-        <div class="modal-header">
-            <h3>Disponibilidad del Técnico</h3>
-            <button class="modal-close" onclick="closeModal('modalTecnico')">×</button>
-        </div>
-        <div class="modal-body">
-            <div class="feedback" id="tecnicoFeedback"></div>
-            <input type="hidden" id="tTecnicoId">
-            <p id="tTecnicoNombre" style="font-weight:bold;margin:0 0 12px;font-size:13px;"></p>
-            <label>Estado de disponibilidad</label>
-            <select id="tMotivo">
-                <option value="">✅ Disponible</option>
-                <option value="apoyo">🔧 No disponible — Apoyo</option>
-                <option value="vacaciones">🏖 No disponible — Vacaciones</option>
-                <option value="mecanico">No disponible - Mecánico</option>
-            </select>
-        </div>
-        <div class="modal-footer">
-            <button class="btn btn-secondary" onclick="closeModal('modalTecnico')">Cancelar</button>
-            <button class="btn btn-primary" onclick="saveTecnicoStatus()">Guardar</button>
+    <!-- ══════════════ MODAL DISPONIBILIDAD TÉCNICO ══════════════ -->
+    <div class="modal-overlay" id="modalTecnico">
+        <div class="modal-box" style="width:460px;">
+            <div class="modal-header">
+                <h3>Disponibilidad del Técnico</h3>
+                <button class="modal-close" onclick="closeModal('modalTecnico')">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="feedback" id="tecnicoFeedback"></div>
+                <input type="hidden" id="tTecnicoId">
+                <p id="tTecnicoNombre" style="font-weight:bold;margin:0 0 12px;font-size:13px;color:#1a4d6d;"></p>
+
+                <label>Estado de disponibilidad</label>
+                <select id="tMotivo" onchange="onTablMotivoChange()">
+                    <option value="">✅ Disponible</option>
+                    <option value="apoyo">🔧 No disponible — Apoyo</option>
+                    <option value="vacaciones">🏖 No disponible — Vacaciones</option>
+                    <option value="mecanico">🔴 No disponible — Mecánico</option>
+                </select>
+
+                <!-- Fechas: aparecen cuando hay motivo -->
+                <div id="tCamposFechas" class="campos-motivo-t" style="margin-top:10px;">
+                    <div class="fechas-row-sm">
+                        <div>
+                            <label>Fecha de inicio</label>
+                            <input type="date" id="tFechaInicio">
+                        </div>
+                        <div>
+                            <label>Fecha final</label>
+                            <input type="date" id="tFechaFin">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Horas: solo mecánico -->
+                <div id="tCamposHoras" class="campos-horas-t" style="margin-top:10px;">
+                    <label>Horas a bloquear</label>
+                    <div class="horas-grid-sm" id="tHorasGrid"></div>
+                </div>
+
+                <!-- Descripción: mecánico y apoyo -->
+                <div id="tCamposDesc" class="campos-motivo-t" style="margin-top:10px; display:none;">
+                    <label>Motivo / Descripción</label>
+                    <textarea id="tDescripcion" maxlength="500" style="min-height:55px;"
+                        placeholder="Escribe el motivo..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('modalTecnico')">Cancelar</button>
+                <button class="btn btn-primary" onclick="saveTecnicoStatus()">Guardar</button>
+            </div>
         </div>
     </div>
-</div>
 
 <script>
 const ROL_ID             = <?= (int) $rolId ?>;
 const BASE_URL           = '<?= BASE_URL ?>';
 const FECHA_HOY_SERVIDOR = '<?= $fechaHoy ?>';
-const FECHA_TABLERO      = '<?= htmlspecialchars($fecha) ?>';
+    const FECHA_TABLERO      = '<?= htmlspecialchars($fecha) ?>';
+    const HORARIOS_SISTEMA   = <?= json_encode(array_values($horarios)) ?>;
 
 /* ── Menú ─────────────────────────────────────────────────── */
 function toggleMenu(e) {
@@ -1108,29 +1182,115 @@ function showFeedback(msg, type) {
     el.textContent = msg; el.className = 'feedback ' + type;
 }
 
-/* ── Modal técnico ──────────────────────────────────────── */
-function openEditTecnicoModal(btn) {
-    document.getElementById('tTecnicoId').value           = btn.dataset.tecnicoId;
-    document.getElementById('tTecnicoNombre').textContent = btn.dataset.tecnicoNombre;
-    document.getElementById('tMotivo').value              = btn.dataset.tecnicoMotivo || '';
-    const fb = document.getElementById('tecnicoFeedback');
-    fb.className = 'feedback'; fb.textContent = '';
-    openModal('modalTecnico');
-}
-async function saveTecnicoStatus() {
-    const id     = parseInt(document.getElementById('tTecnicoId').value);
-    const motivo = document.getElementById('tMotivo').value || null;
-    const res  = await fetch(`${BASE_URL}?action=tecnico.status`, {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({ tecnico_id: id, motivo }),
-    });
-    const json = await res.json();
-    const fb = document.getElementById('tecnicoFeedback');
-    if (json.success) {
-        fb.textContent = '✓ Actualizado. Recargando...'; fb.className = 'feedback success';
-        setTimeout(() => location.reload(), 800);
-    } else { fb.textContent = json.message || 'Error'; fb.className = 'feedback error'; }
-}
+    /* ── Modal técnico ──────────────────────────────────────────── */
+    function onTablMotivoChange() {
+        const motivo = document.getElementById('tMotivo').value;
+        const fechas = document.getElementById('tCamposFechas');
+        const horas  = document.getElementById('tCamposHoras');
+        const desc   = document.getElementById('tCamposDesc');
+        fechas.classList.toggle('visible', motivo !== '');
+        horas.classList.toggle('visible',  motivo === 'mecanico');
+        if (motivo === 'mecanico' || motivo === 'apoyo') {
+            desc.style.display = 'block';
+        } else {
+            desc.style.display = 'none';
+        }
+    }
+
+    function poblarHorasGrid() {
+        const grid = document.getElementById('tHorasGrid');
+        if (grid.children.length > 0) return;
+        const todas = document.createElement('label');
+        todas.className = 'hora-check-sm todas-sm';
+        todas.dataset.value = 'todas';
+        todas.textContent = 'Todas las horas';
+        todas.onclick = () => toggleHoraSm(todas);
+        grid.appendChild(todas);
+        HORARIOS_SISTEMA.forEach(h => {
+            const lbl = document.createElement('label');
+            lbl.className = 'hora-check-sm';
+            lbl.dataset.value = h.horario_id;
+            lbl.textContent = h.hora.substring(0,5);
+            lbl.onclick = () => toggleHoraSm(lbl);
+            grid.appendChild(lbl);
+        });
+    }
+
+    function toggleHoraSm(el) {
+        if (el.classList.contains('todas-sm')) {
+            const sel = el.classList.contains('selected');
+            document.querySelectorAll('#tHorasGrid .hora-check-sm').forEach(h => h.classList.remove('selected'));
+            if (!sel) el.classList.add('selected');
+        } else {
+            document.querySelector('#tHorasGrid .todas-sm')?.classList.remove('selected');
+            el.classList.toggle('selected');
+        }
+    }
+
+    function getHorasSeleccionadasSm() {
+        if (document.querySelector('#tHorasGrid .todas-sm.selected')) return null;
+        const ids = [];
+        document.querySelectorAll('#tHorasGrid .hora-check-sm:not(.todas-sm).selected')
+            .forEach(el => ids.push(parseInt(el.dataset.value)));
+        return ids.length ? ids : [];
+    }
+
+    function openEditTecnicoModal(btn) {
+        document.getElementById('tTecnicoId').value           = btn.dataset.tecnicoId;
+        document.getElementById('tTecnicoNombre').textContent = btn.dataset.tecnicoNombre;
+        document.getElementById('tMotivo').value              = btn.dataset.tecnicoMotivo || '';
+        document.getElementById('tDescripcion').value         = '';
+        const hoy = new Date().toISOString().split('T')[0];
+        document.getElementById('tFechaInicio').value = hoy;
+        document.getElementById('tFechaFin').value    = hoy;
+        document.querySelectorAll('#tHorasGrid .hora-check-sm').forEach(h => h.classList.remove('selected'));
+        poblarHorasGrid();
+        onTablMotivoChange();
+        const fb = document.getElementById('tecnicoFeedback');
+        fb.className = 'feedback'; fb.textContent = '';
+        openModal('modalTecnico');
+    }
+
+    async function saveTecnicoStatus() {
+        const id     = parseInt(document.getElementById('tTecnicoId').value);
+        const motivo = document.getElementById('tMotivo').value || null;
+        const fb = document.getElementById('tecnicoFeedback');
+        const payload = { tecnico_id: id, motivo };
+
+        if (motivo) {
+            payload.fecha_inicio = document.getElementById('tFechaInicio').value;
+            payload.fecha_fin    = document.getElementById('tFechaFin').value;
+            payload.descripcion  = document.getElementById('tDescripcion').value.trim() || null;
+
+            if (!payload.fecha_inicio || !payload.fecha_fin) {
+                fb.textContent = 'Las fechas son obligatorias.'; fb.className = 'feedback error'; return;
+            }
+            if (payload.fecha_inicio > payload.fecha_fin) {
+                fb.textContent = 'La fecha de inicio no puede ser posterior a la fecha final.'; fb.className = 'feedback error'; return;
+            }
+            if ((motivo === 'mecanico' || motivo === 'apoyo') && !payload.descripcion) {
+                fb.textContent = 'El motivo/descripción es obligatorio.'; fb.className = 'feedback error'; return;
+            }
+            if (motivo === 'mecanico') {
+                const horas = getHorasSeleccionadasSm();
+                if (horas !== null && horas.length === 0) {
+                    fb.textContent = 'Selecciona al menos una hora o "Todas".'; fb.className = 'feedback error'; return;
+                }
+                payload.horas_ids = horas === null ? ['todas'] : horas;
+            }
+        }
+
+        const res  = await fetch(`${BASE_URL}?action=tecnico.status`, {
+            method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload),
+        });
+        const json = await res.json();
+        if (json.success) {
+            fb.textContent = '✓ Actualizado. Recargando...'; fb.className = 'feedback success';
+            setTimeout(() => location.reload(), 800);
+        } else {
+            fb.textContent = json.message || 'Error'; fb.className = 'feedback error';
+        }
+    }
 
 /* ── Helpers de modales ─────────────────────────────────── */
 function openModal(id)  { document.getElementById(id).classList.add('open'); }

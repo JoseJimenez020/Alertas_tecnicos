@@ -56,8 +56,6 @@ class TicketModel
 
     /**
      * Obtener tickets para el reporte de administrador.
-     * Soporta filtros opcionales: tecnico_id, fecha_desde, fecha_hasta, usuario_id.
-     * Incluye llamadas agrupadas y teléfono del técnico.
      */
     public function getForReport(array $filtros = []): array
     {
@@ -104,13 +102,10 @@ class TicketModel
                 tec.num_telefono       AS telefono_tecnico,
                 u.nombre           AS agente_nombre,
                 h.hora,
-                -- llamada 1
                 MAX(CASE WHEN tl.no_llamada = 1 THEN tl.respuesta_tecnico END) AS ll1_tecnico,
                 MAX(CASE WHEN tl.no_llamada = 1 THEN tl.respuesta_cliente END) AS ll1_cliente,
-                -- llamada 2
                 MAX(CASE WHEN tl.no_llamada = 2 THEN tl.respuesta_tecnico END) AS ll2_tecnico,
                 MAX(CASE WHEN tl.no_llamada = 2 THEN tl.respuesta_cliente END) AS ll2_cliente,
-                -- llamada 3
                 MAX(CASE WHEN tl.no_llamada = 3 THEN tl.respuesta_tecnico END) AS ll3_tecnico,
                 MAX(CASE WHEN tl.no_llamada = 3 THEN tl.respuesta_cliente END) AS ll3_cliente,
                 COUNT(tl.llamada_id) AS total_llamadas
@@ -178,9 +173,6 @@ class TicketModel
         ]);
     }
 
-    /**
-     * Marcar ticket como terminado (o revertir a null si se pasa null).
-     */
     public function setEstado(int $id, ?string $estado): void
     {
         $stmt = $this->db->prepare("
@@ -189,13 +181,8 @@ class TicketModel
         $stmt->execute([':estado' => $estado, ':id' => $id]);
     }
 
-        /** Eliminar un ticket por ID */
     public function delete(int $id): bool
     {
-        // Descomenta estas líneas si tu base de datos NO tiene ON DELETE CASCADE:
-        // $stmtLlamadas = $this->db->prepare("DELETE FROM tm_llamadas WHERE ticket_id = :id");
-        // $stmtLlamadas->execute([':id' => $id]);
-
         $stmt = $this->db->prepare("DELETE FROM tm_ticket WHERE ticket_id = :id");
         return $stmt->execute([':id' => $id]);
     }
@@ -231,7 +218,7 @@ class TicketModel
     }
 
     // ══════════════════════════════════════════════════════════════════
-    // LÓGICA DE REAGENDADO
+    // LÓGICA DE REAGENDADO — respeta bloqueos
     // ══════════════════════════════════════════════════════════════════
 
     private function nextWorkday(string $fecha): string
@@ -262,10 +249,31 @@ class TicketModel
         return $stmt->fetchAll();
     }
 
+    /**
+     * Verifica si un slot está bloqueado por tm_bloqueo_tecnico.
+     * Usa instancia compartida (evita N+1 en loops — los bloqueos se pre-cargan fuera).
+     */
+    private function isSlotBloqueado(int $tecnicoId, string $fecha, int $horarioId, array $bloqueosCache): bool
+    {
+        $bloqueosTec = $bloqueosCache[$tecnicoId] ?? [];
+        foreach ($bloqueosTec as $b) {
+            if ($fecha < $b['fecha_inicio'] || $fecha > $b['fecha_fin']) continue;
+            $horas = $b['horas_ids'] ?? null;
+            if ($horas === null) return true;                        // bloqueo total del día
+            if (in_array($horarioId, (array) $horas)) return true;  // hora específica bloqueada
+        }
+        return false;
+    }
+
     public function getNextAvailableSlot(int $tecnicoId, int $currentHorarioId, string $currentFecha): ?array
     {
         $horarios = $this->getAllHorarios();
         if (empty($horarios)) return null;
+
+        // Pre-cargar bloqueos del técnico para los próximos 30 días
+        $hasta = date('Y-m-d', strtotime($currentFecha . ' +35 days'));
+        $bloqueModel = new BloqueModel();
+        $bloqueosCache = $bloqueModel->getActivosEnRango([$tecnicoId], $currentFecha, $hasta);
 
         $posMap = [];
         foreach ($horarios as $i => $h) $posMap[(int)$h['horario_id']] = $i;
@@ -279,10 +287,11 @@ class TicketModel
             $fecha = $this->nextWorkday($fecha);
             $desde = ($day === 0) ? $startPos : 0;
             for ($i = $desde; $i < $total; $i++) {
-                $h = $horarios[$i];
-                if (!$this->exists($tecnicoId, (int)$h['horario_id'], $fecha)) {
-                    return ['fecha' => $fecha, 'horario_id' => (int)$h['horario_id'], 'hora' => $h['hora']];
-                }
+                $h   = $horarios[$i];
+                $hId = (int)$h['horario_id'];
+                if ($this->exists($tecnicoId, $hId, $fecha)) continue;
+                if ($this->isSlotBloqueado($tecnicoId, $fecha, $hId, $bloqueosCache)) continue;
+                return ['fecha' => $fecha, 'horario_id' => $hId, 'hora' => $h['hora']];
             }
             $fecha    = $this->nextWorkdayAfter($fecha);
             $startPos = 0;
@@ -309,6 +318,12 @@ class TicketModel
             $cursor = date('Y-m-d', strtotime($cursor . ' +1 day'));
         }
 
+        // Pre-cargar bloqueos de todos los técnicos activos en el rango
+        $hasta = end($diasLaborables);
+        $tecIds = array_map(fn($t) => (int)$t['TecnicoId'], $tecnicos);
+        $bloqueModel   = new BloqueModel();
+        $bloqueosCache = $bloqueModel->getActivosEnRango($tecIds, $fromFecha, $hasta);
+
         $resultado = [];
         foreach ($tecnicos as $tec) {
             $tecId = (int) $tec['TecnicoId'];
@@ -316,20 +331,23 @@ class TicketModel
             foreach ($diasLaborables as $fecha) {
                 foreach ($horarios as $h) {
                     $hId = (int) $h['horario_id'];
+                    // Verificar ticket existente (excluyendo el que se está reagendando)
                     $stmt2 = $this->db->prepare("
                         SELECT COUNT(*) FROM tm_ticket
                         WHERE tecnico_id = :t AND horario_id = :h AND fecha = :f AND ticket_id != :excl
                     ");
                     $stmt2->execute([':t' => $tecId, ':h' => $hId, ':f' => $fecha, ':excl' => $excludeTicketId]);
-                    if (!(int)$stmt2->fetchColumn()) {
-                        $slots[] = [
-                            'horario_id' => $hId,
-                            'hora'       => $h['hora'],
-                            'fecha'      => $fecha,
-                            'fecha_fmt'  => date('d/m/Y', strtotime($fecha)),
-                            'label'      => date('d/m/Y', strtotime($fecha)) . ' — ' . $h['hora'],
-                        ];
-                    }
+                    if ((int)$stmt2->fetchColumn()) continue;
+                    // Verificar bloqueo
+                    if ($this->isSlotBloqueado($tecId, $fecha, $hId, $bloqueosCache)) continue;
+
+                    $slots[] = [
+                        'horario_id' => $hId,
+                        'hora'       => $h['hora'],
+                        'fecha'      => $fecha,
+                        'fecha_fmt'  => date('d/m/Y', strtotime($fecha)),
+                        'label'      => date('d/m/Y', strtotime($fecha)) . ' — ' . $h['hora'],
+                    ];
                 }
             }
             if (!empty($slots)) {

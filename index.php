@@ -18,6 +18,7 @@ require_once BASE_PATH . '/models/TecnicoModel.php';
 require_once BASE_PATH . '/models/HorarioModel.php';
 require_once BASE_PATH . '/models/UsuarioModel.php';
 require_once BASE_PATH . '/models/LlamadaModel.php';
+require_once BASE_PATH . '/models/BloqueModel.php';
 require_once BASE_PATH . '/controller/AuthController.php';
 require_once BASE_PATH . '/controller/TicketController.php';
 require_once BASE_PATH . '/controller/TableroController.php';
@@ -25,6 +26,7 @@ require_once BASE_PATH . '/controller/AdminController.php';
 require_once BASE_PATH . '/controller/TecnicoController.php';
 require_once BASE_PATH . '/controller/HorarioController.php';
 require_once BASE_PATH . '/controller/NotifController.php';
+require_once BASE_PATH . '/controller/BloqueController.php';
 
 $action = $_GET['action'] ?? 'tablero';
 $ip = Security::clientIp();
@@ -65,6 +67,7 @@ switch ($action) {
         break;
     case 'ticket.delete':
         (new TicketController())->delete();
+        break;
     case 'ticket.reschedule':
         (new TicketController())->reschedule();
         break;
@@ -123,6 +126,20 @@ switch ($action) {
         break;
     case 'horario.delete':
         (new HorarioController())->delete();
+        break;
+
+    // ── Bloqueos ──────────────────────────────────────────────────
+    case 'bloqueo.list':
+        (new BloqueController())->list();
+        break;
+    case 'bloqueo.store':
+        (new BloqueController())->store();
+        break;
+    case 'bloqueo.update':
+        (new BloqueController())->update();
+        break;
+    case 'bloqueo.delete':
+        (new BloqueController())->delete();
         break;
 
     default:
