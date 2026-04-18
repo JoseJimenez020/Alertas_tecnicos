@@ -59,7 +59,7 @@ class TecnicoModel
     public function create(array $data): int
     {
         $stmt = $this->db->prepare("
-            INSERT INTO tecnicos (TecnicoNombre, telefono, zona, status, status_motivo)
+            INSERT INTO tecnicos (TecnicoNombre, num_telefono, zona, status, status_motivo)
             VALUES (:nombre, :telefono, :zona, 1, NULL)
         ");
         $stmt->execute([
