@@ -68,7 +68,7 @@ class TecnicoController
      * Body esperado:
      *   { tecnico_id, motivo,                    ← siempre
      *     fecha_inicio, fecha_fin,                ← todos los motivos
-     *     horas_ids,                              ← solo 'mecanico'
+     *     horas_ids,                              ← solo 'mecanico'; null = todas las horas
      *     descripcion                             ← mecanico y apoyo
      *   }
      *
@@ -109,19 +109,21 @@ class TecnicoController
             if ($fechaInicio > $fechaFin)
                 $this->jsonError('La fecha de inicio no puede ser posterior a la fecha final.', 422);
 
-            $horasIds = null;
+            $horasIds = null; // null = bloqueo total del día (todas las horas)
             $descripcion = trim($body['descripcion'] ?? '');
 
             if ($motivoNorm === 'mecanico') {
-                $horasIds = $body['horas_ids'] ?? [];
-                if (empty($horasIds))
-                    $this->jsonError('Selecciona al menos una hora para bloquear.', 422);
-                // Normalizar: "todas" → null (bloqueo total)
-                if (in_array('todas', (array) $horasIds, true)) {
-                    $horasIds = null;
-                } else {
-                    $horasIds = array_map('intval', (array) $horasIds);
+                // El frontend envía null cuando seleccionó "Todas las horas",
+                // o un array de IDs cuando seleccionó horas específicas.
+                // array_key_exists distingue entre clave ausente y valor null.
+                if (array_key_exists('horas_ids', $body) && $body['horas_ids'] !== null) {
+                    // Horas específicas seleccionadas
+                    $horasRaw = (array) $body['horas_ids'];
+                    if (empty($horasRaw))
+                        $this->jsonError('Selecciona al menos una hora para bloquear.', 422);
+                    $horasIds = array_map('intval', $horasRaw);
                 }
+                // Si horas_ids es null o la clave no existe → $horasIds queda null (todas)
                 if (empty($descripcion))
                     $this->jsonError('El motivo es obligatorio para mecánico.', 422);
             } elseif ($motivoNorm === 'apoyo') {

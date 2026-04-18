@@ -74,17 +74,12 @@
         td.cell-ticket { cursor: pointer; position: relative; }
         td.cell-ticket:hover { background: #f0f7ff; }
         td.cell-ticket.occupied { cursor: pointer; }
-        /* Estado terminado: fondo verde en la celda */
         td.cell-ticket.estado-terminado { background-color: #d4edda !important; }
         td.cell-ticket.estado-terminado:hover { background-color: #c3e6cb !important; }
-        /* 1 llamada sin terminar: fondo verde en la celda */
         td.cell-ticket.estado-primera-llamada { background-color: #637052 !important; }
-        /* 2 llamadas sin terminar: fondo naranja en la celda */
         td.cell-ticket.estado-segunda-llamada { background-color: #E48312 !important; }
-        /* 3 llamadas sin terminar: fondo rojo en la celda */
         td.cell-ticket.estado-rojo { background-color: #fa2e2e !important; }
         td.cell-ticket.estado-rojo:hover { background-color: #f5c6cb !important; }
-        /* El ícono (círculo/cuadrado) lleva su propio color inline — no hereda el fondo */
         .icon-wrap { display: flex; align-items: center; justify-content: center; height: 100%; }
         th.col-nodisponible { background-color: #156082 !important; color: #fff !important; }
         .badge-nodisponible {
@@ -143,7 +138,6 @@
         .btn-reschedule { background: #6f42c1; color: #fff; }
         .btn-reschedule:hover { background: #5a32a3; }
         .btn-reschedule:disabled { background: #b39ddb; cursor: not-allowed; }
-        /* Botón Completado */
         .btn-completado { background: #28a745; color: #fff; }
         .btn-completado:hover { background: #218838; }
         .btn-completado.activo { background: #1e7145; box-shadow: inset 0 0 0 2px rgba(255,255,255,.4); }
@@ -197,34 +191,23 @@
 
         /* ── Modal de reagendado ─────────────────────────────────── */
         #modalReagendar .modal-box { width: 460px; }
-
         .reagendar-step { display: none; }
         .reagendar-step.active { display: block; }
-
-        .slot-loading {
-            text-align: center; padding: 20px; color: #888; font-size: 12px;
-        }
+        .slot-loading { text-align: center; padding: 20px; color: #888; font-size: 12px; }
         .slot-empty {
             text-align: center; padding: 16px; color: #c0392b; font-size: 12px;
             background: #fdf0f0; border: 1px solid #f5c6cb;
         }
-
-        /* Select con grupo de zonas */
         #rSelectTecnico, #rSelectSlot { font-size: 12px; }
-        #rSelectTecnico optgroup, #rSelectSlot optgroup {
-            font-weight: bold; color: #1a4d6d;
-        }
-
+        #rSelectTecnico optgroup, #rSelectSlot optgroup { font-weight: bold; color: #1a4d6d; }
         .reagendar-info {
             background: #e8f1f8; border-left: 3px solid #1a4d6d;
             padding: 8px 12px; font-size: 11px; margin-bottom: 12px;
         }
         .reagendar-info strong { color: #1a4d6d; }
-
         .dias-selector { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
         .dias-selector label { font-weight: bold; font-size: 11px; margin: 0; }
         .dias-selector select { width: auto; }
-
         .btn-auto-reschedule {
             width: 100%; padding: 8px; background: #f8f9fa; border: 1px dashed #1a4d6d;
             color: #1a4d6d; cursor: pointer; font-size: 11px; text-align: center;
@@ -234,7 +217,7 @@
 
         /* ── Buscador de tickets ─────────────────────────────────── */
         .buscador-wrap {
-            display: none; /* se muestra solo a rol 4 y 5 via JS/PHP */
+            display: none;
             align-items: center; gap: 6px;
         }
         .buscador-wrap input[type="text"] {
@@ -246,8 +229,6 @@
             border: none; cursor: pointer; font-size: 12px;
         }
         .buscador-wrap button:hover { background: #245f85; }
-
-        /* Dropdown de resultados de búsqueda */
         .search-dropdown {
             position: absolute; top: 100%; right: 0;
             background: #fff; border: 1px solid #ccc;
@@ -263,21 +244,18 @@
         .search-result-item:hover { background: #f0f5ff; }
         .search-result-item .sri-ticket { font-weight: bold; color: #1a4d6d; }
         .search-result-item .sri-meta { color: #666; margin-top: 2px; }
-        .search-no-results {
-            padding: 10px 12px; font-size: 11px; color: #888; text-align: center;
-        }
+        .search-no-results { padding: 10px 12px; font-size: 11px; color: #888; text-align: center; }
 
-        /* Efecto de pulso que domina sobre cualquier estado (terminado o rojo) */
         td.cell-highlight-strong,
         td.cell-ticket.estado-primera-llamada.cell-highlight-strong,
         td.cell-ticket.estado-segunda-llamada.cell-highlight-strong,
         td.cell-ticket.estado-terminado.cell-highlight-strong,
         td.cell-ticket.estado-rojo.cell-highlight-strong {
             background-color: #FF4500 !important;
-            box-shadow: inset 0 0 15px rgba(255, 255, 255, 0.6), 0 0 12px #FF4500 !important;
+            box-shadow: inset 0 0 15px rgba(255,255,255,0.6), 0 0 12px #FF4500 !important;
             border: 1px solid #FFF !important;
         }
-         .horas-grid-sm {
+        .horas-grid-sm {
             display:grid; grid-template-columns:repeat(4,1fr); gap:5px; margin-top:6px;
         }
         .hora-check-sm {
@@ -288,11 +266,7 @@
         }
         .hora-check-sm input { display:none; }
         .hora-check-sm.selected { background:#1a4d6d; color:#fff; border-color:#1a4d6d; }
-        .hora-check-sm.todas-sm {
-            grid-column:1/-1; background:#f0f5ff;
-            border-color:#1a4d6d; color:#1a4d6d; font-weight:bold;
-        }
-        .hora-check-sm.todas-sm.selected { background:#1a4d6d; color:#fff; }
+
         .fechas-row-sm { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
         .campos-motivo-t { display:none; }
         .campos-motivo-t.visible { display:block; }
@@ -344,7 +318,7 @@ foreach ($allTecs as $t) {
 }
 
 $rolId        = (int) $usuario['rol_id'];
-$canCreate    = in_array($rolId, [1, 2, 3, 4]);   // rol 5 (Encargado de Zona) solo lectura
+$canCreate    = in_array($rolId, [1, 2, 3, 4]);
 $rolesNombres = ['','Call Center','Mesa de Control','Supervisor CC','Administrador','Encargado de Zona'];
 $fechaHoy     = date('Y-m-d');
 ?>
@@ -427,15 +401,24 @@ $fechaHoy     = date('Y-m-d');
                 <?php endforeach; ?>
             </tr>
             <tr>
-
                 <?php foreach ($tecnicosSorted as $t):
-                    $tecId_h    = (int)$t['TecnicoId'];
-                    
-                    // NUEVO: La disponibilidad depende SOLO de la tabla de bloqueos para el día actual
-                    $bloqueadoHoy = !empty($bloqueosCelda[$tecId_h]['_todo']);
-                    $thClass = $bloqueadoHoy ? 'col-nodisponible' : '';
-                    
-                    // Etiqueta de motivo: tomar del bloqueo activo si existe
+                    $tecId_h = (int)$t['TecnicoId'];
+
+                    // Bloqueado completamente ese día (vacaciones/apoyo/mecánico-todas-horas)
+                    $bloqueadoTotal = !empty($bloqueosCelda[$tecId_h]['_todo']);
+
+                    // Tiene AL MENOS algún bloqueo parcial (mecánico con horas específicas)
+                    // Se detecta si hay alguna clave numérica en bloqueosCelda para este técnico
+                    $bloqueadoParcial = false;
+                    if (!$bloqueadoTotal && isset($bloqueosCelda[$tecId_h])) {
+                        foreach ($bloqueosCelda[$tecId_h] as $k => $v) {
+                            if (is_int($k)) { $bloqueadoParcial = true; break; }
+                        }
+                    }
+
+                    $thClass = $bloqueadoTotal ? 'col-nodisponible' : '';
+
+                    // Etiqueta de motivo desde el bloqueo activo en la fecha del tablero
                     $motivoLabel = '';
                     if (!empty($bloquesDia[$tecId_h][0]['motivo'])) {
                         $motivoLabel = $bloquesDia[$tecId_h][0]['motivo'];
@@ -443,13 +426,16 @@ $fechaHoy     = date('Y-m-d');
                 ?>
                 <th class="<?= $thClass ?>" title="<?= htmlspecialchars($t['TecnicoNombre']) ?>">
                     <?= $t['TecnicoId'] ?>
-                    <?php if ($bloqueadoHoy): ?>
+                    <?php if ($bloqueadoTotal): ?>
                     <span class="badge-nodisponible">
                         <?= $motivoLabel ? htmlspecialchars(ucfirst($motivoLabel)) : 'No disp.' ?>
                     </span>
+                    <?php elseif ($bloqueadoParcial): ?>
+                    <span class="badge-nodisponible" style="background:rgba(200,80,0,.35);">
+                        <?= $motivoLabel ? htmlspecialchars(ucfirst($motivoLabel)) : 'Parcial' ?>
+                    </span>
                     <?php endif; ?>
                 </th>
-
                 <?php endforeach; ?>
             </tr>
         </thead>
@@ -459,14 +445,12 @@ $fechaHoy     = date('Y-m-d');
                 <td><?= htmlspecialchars(substr($h['hora'],0,5)) ?></td>
 
                 <?php foreach ($tecnicosSorted as $t):
-                    $tecId      = (int)$t['TecnicoId'];
-                    $hId        = (int)$h['horario_id'];
+                    $tecId    = (int)$t['TecnicoId'];
+                    $hId      = (int)$h['horario_id'];
 
-                    // ── Verificar si la CELDA está bloqueada ──────────────────
-                    $statusInactivo   = (int)$t['status'] !== 1;
-                    $bloqueTotal      = !empty($bloqueosCelda[$tecId]['_todo']);
-                    $bloqueEstaHora   = !empty($bloqueosCelda[$tecId][$hId]);
-                    $celdaBloqueada   = $bloqueTotal || $bloqueEstaHora;
+                    $bloqueTotal    = !empty($bloqueosCelda[$tecId]['_todo']);
+                    $bloqueEstaHora = !empty($bloqueosCelda[$tecId][$hId]);
+                    $celdaBloqueada = $bloqueTotal || $bloqueEstaHora;
 
                     $ticket    = $tickets[$tecId][$hId] ?? null;
                     $hasTicket = $ticket !== null;
@@ -474,7 +458,6 @@ $fechaHoy     = date('Y-m-d');
                     if ($celdaBloqueada): echo '<td class="cell-nodisponible"></td>'; continue; endif;
 
                     $cellClass = 'cell-ticket' . ($hasTicket ? ' occupied' : '');
-                    // Lógica para los estados del ticket
                     if ($hasTicket) {
                         $numLlamadas = (int)($ticket['total_llamadas'] ?? 0);
                         if (($ticket['estado'] ?? '') === 'terminado') {
@@ -488,7 +471,6 @@ $fechaHoy     = date('Y-m-d');
                         }
                     }
                 ?>
-
                 <td class="<?= $cellClass ?>"
                     data-tecnico-id="<?= $t['TecnicoId'] ?>"
                     data-tecnico-nombre="<?= htmlspecialchars($t['TecnicoNombre']) ?>"
@@ -509,6 +491,10 @@ $fechaHoy     = date('Y-m-d');
     </table>
 
     <!-- ── LISTA INFERIOR ────────────────────────────────────────── -->
+    <!--
+        La lista usa $bloquesDiaHoy / $bloqueosCeldaHoy (fecha real del servidor),
+        independiente de la fecha consultada en el tablero.
+    -->
     <div class="staff-lists">
         <?php
         $groups = [
@@ -524,17 +510,18 @@ $fechaHoy     = date('Y-m-d');
             <strong><?= $z ?></strong>
             <?php foreach ($allTecsByZona[$z] as $t):
                 $tecId = (int)$t['TecnicoId'];
-                $bActivo = $bloquesDia[$tecId][0] ?? null; // Obtener el bloqueo activo del día actual
-                $disp    = empty($bloqueosCelda[$tecId]['_todo']); // Disponible si NO tiene bloqueo de todo el día
+
+                // ── SIEMPRE usa bloqueos de HOY para la lista ──────────
+                $bActivo = $bloquesDiaHoy[$tecId][0] ?? null;
+                $disp    = empty($bloqueosCeldaHoy[$tecId]['_todo']);
                 $mot     = $bActivo['motivo'] ?? '';
                 $liClass = $disp ? 'list-item' : 'list-item nodisponible';
 
-                // Variables para el modal
-                $bId      = $bActivo['bloqueo_id'] ?? '';
-                $bInicio  = $bActivo['fecha_inicio'] ?? date('Y-m-d');
-                $bFin     = $bActivo['fecha_fin'] ?? date('Y-m-d');
-                $bDesc    = $bActivo['descripcion'] ?? '';
-                $bHoras   = htmlspecialchars(is_array($bActivo['horas_ids'] ?? null) ? json_encode($bActivo['horas_ids']) : '');
+                $bId     = $bActivo['bloqueo_id'] ?? '';
+                $bInicio = $bActivo['fecha_inicio'] ?? date('Y-m-d');
+                $bFin    = $bActivo['fecha_fin'] ?? date('Y-m-d');
+                $bDesc   = $bActivo['descripcion'] ?? '';
+                $bHoras  = htmlspecialchars(is_array($bActivo['horas_ids'] ?? null) ? json_encode($bActivo['horas_ids']) : '');
             ?>
             <div class="<?= $liClass ?>">
                 <span class="id-num"><?= $t['TecnicoId'] ?></span>
@@ -646,10 +633,7 @@ $fechaHoy     = date('Y-m-d');
         <div class="modal-body">
             <div class="feedback" id="reagendarFeedback"></div>
             <input type="hidden" id="rTicketId">
-
             <div class="reagendar-info" id="reagendarInfo"></div>
-
-            <!-- Paso 1: configurar búsqueda -->
             <div class="reagendar-step active" id="rStep1">
                 <div class="dias-selector">
                     <label>Buscar en los próximos:</label>
@@ -666,18 +650,13 @@ $fechaHoy     = date('Y-m-d');
                 <div id="rSlotsContainer">
                     <p style="font-size:11px;color:#888;">Selecciona el rango y haz clic en "Buscar slots".</p>
                 </div>
-
-                <!-- Opción automática -->
                 <button class="btn-auto-reschedule" onclick="reagendarAutomatico()">
                     ⚡ Reagendar automáticamente al siguiente slot del mismo técnico
                 </button>
             </div>
-
-            <!-- Paso 2: confirmación -->
             <div class="reagendar-step" id="rStep2">
                 <p style="font-size:12px;">¿Confirmar el reagendado?</p>
-                <div id="rConfirmInfo" style="background:#f0f7ff;border:1px solid #1a4d6d;padding:10px;font-size:12px;border-radius:3px;">
-                </div>
+                <div id="rConfirmInfo" style="background:#f0f7ff;border:1px solid #1a4d6d;padding:10px;font-size:12px;border-radius:3px;"></div>
             </div>
         </div>
         <div class="modal-footer" id="reagendarFooter">
@@ -686,67 +665,64 @@ $fechaHoy     = date('Y-m-d');
     </div>
 </div>
 
-    <!-- ══════════════ MODAL DISPONIBILIDAD TÉCNICO ══════════════ -->
-    <div class="modal-overlay" id="modalTecnico">
-        <div class="modal-box" style="width:460px;">
-            <div class="modal-header">
-                <h3>Disponibilidad del Técnico</h3>
-                <button class="modal-close" onclick="closeModal('modalTecnico')">×</button>
-            </div>
-            <div class="modal-body">
-                <div class="feedback" id="tecnicoFeedback"></div>
-                <input type="hidden" id="tTecnicoId">
-                <input type="hidden" id="tBloqueoId"> 
-                <p id="tTecnicoNombre" style="font-weight:bold;margin:0 0 12px;font-size:13px;color:#1a4d6d;"></p>
+<!-- ══════════════ MODAL DISPONIBILIDAD TÉCNICO ══════════════ -->
+<div class="modal-overlay" id="modalTecnico">
+    <div class="modal-box" style="width:460px;">
+        <div class="modal-header">
+            <h3>Disponibilidad del Técnico</h3>
+            <button class="modal-close" onclick="closeModal('modalTecnico')">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="feedback" id="tecnicoFeedback"></div>
+            <input type="hidden" id="tTecnicoId">
+            <input type="hidden" id="tBloqueoId">
+            <p id="tTecnicoNombre" style="font-weight:bold;margin:0 0 12px;font-size:13px;color:#1a4d6d;"></p>
 
-                <label>Estado de disponibilidad</label>
-                <select id="tMotivo" onchange="onTablMotivoChange()">
-                    <option value="">✅ Disponible</option>
-                    <option value="apoyo">🔧 No disponible — Apoyo</option>
-                    <option value="vacaciones">🏖 No disponible — Vacaciones</option>
-                    <option value="mecanico">🔴 No disponible — Mecánico</option>
-                </select>
+            <label>Estado de disponibilidad</label>
+            <select id="tMotivo" onchange="onTablMotivoChange()">
+                <option value="">✅ Disponible</option>
+                <option value="apoyo">🔧 No disponible — Apoyo</option>
+                <option value="vacaciones">🏖 No disponible — Vacaciones</option>
+                <option value="mecanico">🔴 No disponible — Mecánico</option>
+            </select>
 
-                <!-- Fechas: aparecen cuando hay motivo -->
-                <div id="tCamposFechas" class="campos-motivo-t" style="margin-top:10px;">
-                    <div class="fechas-row-sm">
-                        <div>
-                            <label>Fecha de inicio</label>
-                            <input type="date" id="tFechaInicio">
-                        </div>
-                        <div>
-                            <label>Fecha final</label>
-                            <input type="date" id="tFechaFin">
-                        </div>
+            <div id="tCamposFechas" class="campos-motivo-t" style="margin-top:10px;">
+                <div class="fechas-row-sm">
+                    <div>
+                        <label>Fecha de inicio</label>
+                        <input type="date" id="tFechaInicio">
+                    </div>
+                    <div>
+                        <label>Fecha final</label>
+                        <input type="date" id="tFechaFin">
                     </div>
                 </div>
-
-                <!-- Horas: solo mecánico -->
-                <div id="tCamposHoras" class="campos-horas-t" style="margin-top:10px;">
-                    <label>Horas a bloquear</label>
-                    <div class="horas-grid-sm" id="tHorasGrid"></div>
-                </div>
-
-                <!-- Descripción: mecánico y apoyo -->
-                <div id="tCamposDesc" class="campos-motivo-t" style="margin-top:10px; display:none;">
-                    <label>Motivo / Descripción</label>
-                    <textarea id="tDescripcion" maxlength="500" style="min-height:55px;"
-                        placeholder="Escribe el motivo..."></textarea>
-                </div>
             </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeModal('modalTecnico')">Cancelar</button>
-                <button class="btn btn-primary" onclick="saveTecnicoStatus()">Guardar</button>
+
+            <div id="tCamposHoras" class="campos-horas-t" style="margin-top:10px;">
+                <label>Horas a bloquear</label>
+                <div class="horas-grid-sm" id="tHorasGrid"></div>
+            </div>
+
+            <div id="tCamposDesc" class="campos-motivo-t" style="margin-top:10px; display:none;">
+                <label>Motivo / Descripción</label>
+                <textarea id="tDescripcion" maxlength="500" style="min-height:55px;"
+                    placeholder="Escribe el motivo..."></textarea>
             </div>
         </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal('modalTecnico')">Cancelar</button>
+            <button class="btn btn-primary" onclick="saveTecnicoStatus()">Guardar</button>
+        </div>
     </div>
+</div>
 
 <script>
 const ROL_ID             = <?= (int) $rolId ?>;
 const BASE_URL           = '<?= BASE_URL ?>';
 const FECHA_HOY_SERVIDOR = '<?= $fechaHoy ?>';
-    const FECHA_TABLERO      = '<?= htmlspecialchars($fecha) ?>';
-    const HORARIOS_SISTEMA   = <?= json_encode(array_values($horarios)) ?>;
+const FECHA_TABLERO      = '<?= htmlspecialchars($fecha) ?>';
+const HORARIOS_SISTEMA   = <?= json_encode(array_values($horarios)) ?>;
 
 /* ── Menú ─────────────────────────────────────────────────── */
 function toggleMenu(e) {
@@ -761,7 +737,7 @@ if (ROL_ID === 2) {
 }
 
 /* ══════════════════════════════════════════════════════════
-   MODAL TICKET — abrir/crear/ver
+   MODAL TICKET
 ══════════════════════════════════════════════════════════ */
 function handleCellClick(cell) {
     const hasTicket = cell.classList.contains('occupied');
@@ -795,17 +771,16 @@ async function openViewMode(ticketId) {
 
     const res  = await fetch(`${BASE_URL}?action=ticket.show&id=${ticketId}`);
     const json = await res.json();
-    if (!json.success) { 
-        showFeedback('No se pudo cargar el ticket.', 'error'); 
-        openModal('modalOverlay'); 
-        return; 
+    if (!json.success) {
+        showFeedback('No se pudo cargar el ticket.', 'error');
+        openModal('modalOverlay');
+        return;
     }
 
     const t = json.data;
     document.getElementById('modalMeta').textContent =
         `Ticket #${t.ticket_id} | Registrado por: ${t.agente_nombre}`;
-    
-    // Llenado de campos principales
+
     document.getElementById('fTicketId').value    = t.ticket_id;
     document.getElementById('fFecha').value       = t.fecha;
     document.getElementById('fHorarioId').value   = t.horario_id;
@@ -823,8 +798,6 @@ async function openViewMode(ticketId) {
         document.getElementById('llamadasSection').style.display = 'none';
     } else {
         document.getElementById('llamadasSection').style.display = 'block';
-        
-        // PROCESAR CADA LLAMADA (Aquí es donde debe ir la lógica)
         for (let n = 1; n <= 3; n++) {
             const ll = (t.llamadas && t.llamadas[n]) || {};
             const inputTecnico = document.getElementById(`lTecnico${n}`);
@@ -837,19 +810,15 @@ async function openViewMode(ticketId) {
             inputCliente.value = ll.respuesta_cliente || '';
 
             if (ll.llamada_id) {
-                // LLAMADA GUARDADA: Bloquear edición
                 bloque.classList.add('llamada-guardada');
                 status.textContent = '✓ Guardada';
                 status.style.color = '#155724';
-                
                 inputTecnico.setAttribute('readonly', true);
                 inputCliente.setAttribute('readonly', true);
                 if (btnSave) btnSave.style.display = 'none';
             } else {
-                // LLAMADA VACÍA: Permitir edición
                 bloque.classList.remove('llamada-guardada');
                 status.textContent = '';
-                
                 inputTecnico.removeAttribute('readonly');
                 inputCliente.removeAttribute('readonly');
                 if (btnSave) btnSave.style.display = 'inline-block';
@@ -857,14 +826,12 @@ async function openViewMode(ticketId) {
         }
     }
 
-    // Configuración del Footer
-    let footer = `<button class="btn btn-secondary" onclick="closeModal('modalOverlay')">Cerrar</button>`;    
+    let footer = `<button class="btn btn-secondary" onclick="closeModal('modalOverlay')">Cerrar</button>`;
     footer += `<button class="btn btn-danger" onclick="deleteTicket(${t.ticket_id})">Eliminar</button>`;
 
     if (!soloLectura) {
         footer += `<button class="btn btn-reschedule" onclick="abrirModalReagendar(${t.ticket_id}, '${t.agente_nombre}', ${t.tecnico_id})">🔄 Reagendar</button>`;
         if (t.can_edit) footer += `<button class="btn btn-warning" onclick="enableEdit()">Editar</button>`;
-        
         const esTerminado = t.estado === 'terminado';
         if (esTerminado) {
             footer += `<button class="btn btn-completado activo" onclick="toggleEstado(${t.ticket_id}, null)">Reabrir</button>`;
@@ -872,7 +839,6 @@ async function openViewMode(ticketId) {
             footer += `<button class="btn btn-completado" onclick="toggleEstado(${t.ticket_id}, 'terminado')">Terminar</button>`;
         }
     }
-    
     document.getElementById('modalFooter').innerHTML = footer;
     openModal('modalOverlay');
 }
@@ -887,23 +853,16 @@ function enableEdit() {
 }
 
 /* ══════════════════════════════════════════════════════════
-   MODAL REAGENDAR — lógica principal
+   MODAL REAGENDAR
 ══════════════════════════════════════════════════════════ */
-
-// Datos del slot seleccionado para confirmar
 let _slotPendiente = null;
 
 async function deleteTicket(ticketId) {
-    if (!confirm('¿Estás seguro de que deseas eliminar este ticket? Esta acción no se puede deshacer.')) {
-        return;
-    }
-
+    if (!confirm('¿Estás seguro de que deseas eliminar este ticket? Esta acción no se puede deshacer.')) return;
     const res = await fetch(`${BASE_URL}?action=ticket.delete`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ticket_id: ticketId })
     });
-
     const json = await res.json();
     if (json.success) {
         showFeedback('Ticket eliminado correctamente.', 'success');
@@ -914,9 +873,8 @@ async function deleteTicket(ticketId) {
 }
 
 function abrirModalReagendar(ticketId, agenteName, tecnicoIdActual) {
-    // Resetear estado
     _slotPendiente = null;
-    window._tecnicoIdActual = tecnicoIdActual; // guardar para preseleccionar en renderSlots
+    window._tecnicoIdActual = tecnicoIdActual;
     document.getElementById('rTicketId').value = ticketId;
     document.getElementById('reagendarFeedback').className = 'feedback';
     document.getElementById('reagendarFeedback').textContent = '';
@@ -925,12 +883,9 @@ function abrirModalReagendar(ticketId, agenteName, tecnicoIdActual) {
     document.getElementById('rSlotsContainer').innerHTML =
         '<p style="font-size:11px;color:#888;">Selecciona el rango y haz clic en "Buscar slots".</p>';
     document.getElementById('rDias').value = '5';
-
-    // Mostrar paso 1
     mostrarPasoReagendar(1);
     document.getElementById('reagendarFooter').innerHTML =
         `<button class="btn btn-secondary" onclick="closeModal('modalReagendar')">Cancelar</button>`;
-
     openModal('modalReagendar');
 }
 
@@ -943,18 +898,14 @@ async function cargarSlots() {
     const ticketId = parseInt(document.getElementById('rTicketId').value);
     const dias     = parseInt(document.getElementById('rDias').value);
     const container = document.getElementById('rSlotsContainer');
-
     container.innerHTML = '<div class="slot-loading">⏳ Buscando horarios disponibles...</div>';
-
     try {
         const res  = await fetch(`${BASE_URL}?action=ticket.getSlots&id=${ticketId}&dias=${dias}`, { cache: 'no-store' });
         const json = await res.json();
-
         if (!json.success || !json.data.tecnicos.length) {
             container.innerHTML = '<div class="slot-empty">⚠ No se encontraron horarios disponibles en el período seleccionado.</div>';
             return;
         }
-
         renderSlots(json.data.tecnicos, ticketId);
     } catch {
         container.innerHTML = '<div class="slot-empty">✗ Error al consultar los horarios. Intenta de nuevo.</div>';
@@ -963,8 +914,6 @@ async function cargarSlots() {
 
 function renderSlots(tecnicos, ticketId) {
     const container = document.getElementById('rSlotsContainer');
-
-    // Selector de técnico
     let tecHtml = '<label style="font-size:11px;font-weight:bold;margin-top:0;">Técnico:</label>';
     tecHtml += '<select id="rSelectTecnico" onchange="actualizarSlots()" style="margin-bottom:10px;">';
     tecnicos.forEach(tec => {
@@ -976,21 +925,14 @@ function renderSlots(tecnicos, ticketId) {
                     </option>`;
     });
     tecHtml += '</select>';
-
-    // Selector de horario/fecha
     tecHtml += '<label style="font-size:11px;font-weight:bold;">Fecha y horario disponible:</label>';
     tecHtml += '<select id="rSelectSlot"></select>';
-
-    // Botón confirmar
     tecHtml += `<div style="margin-top:12px;">
         <button class="btn btn-primary" style="width:100%;" onclick="prepararConfirmacion()">
             Confirmar selección →
         </button>
     </div>`;
-
     container.innerHTML = tecHtml;
-
-    // Guardar referencia a los técnicos para actualizarSlots
     window._slotsData = tecnicos;
     actualizarSlots();
 }
@@ -1002,7 +944,6 @@ function actualizarSlots() {
     const tec    = window._slotsData?.find(t => t.tecnico_id === tecId);
     const slotSel = document.getElementById('rSelectSlot');
     if (!slotSel) return;
-
     slotSel.innerHTML = '';
     (tec?.slots || []).forEach(s => {
         const opt = document.createElement('option');
@@ -1015,30 +956,18 @@ function actualizarSlots() {
 function prepararConfirmacion() {
     const tecSelect  = document.getElementById('rSelectTecnico');
     const slotSelect = document.getElementById('rSelectSlot');
-
     if (!tecSelect || !slotSelect || !slotSelect.value) {
-        mostrarFeedbackReagendar('Selecciona un técnico y un horario.', 'error');
-        return;
+        mostrarFeedbackReagendar('Selecciona un técnico y un horario.', 'error'); return;
     }
-
-    const tecId   = parseInt(tecSelect.value);
+    const tecId     = parseInt(tecSelect.value);
     const tecNombre = tecSelect.options[tecSelect.selectedIndex].textContent;
     const slotData  = JSON.parse(slotSelect.value);
     const slotLabel = slotSelect.options[slotSelect.selectedIndex].textContent;
-
-    _slotPendiente = {
-        tecnico_id : tecId,
-        horario_id : slotData.horario_id,
-        fecha      : slotData.fecha,
-        tecNombre  : tecNombre,
-        slotLabel  : slotLabel,
-    };
-
+    _slotPendiente = { tecnico_id: tecId, horario_id: slotData.horario_id, fecha: slotData.fecha, tecNombre, slotLabel };
     document.getElementById('rConfirmInfo').innerHTML = `
         <strong>Técnico:</strong> ${tecNombre}<br>
         <strong>Nuevo horario:</strong> ${slotLabel}
     `;
-
     mostrarPasoReagendar(2);
     document.getElementById('reagendarFooter').innerHTML = `
         <button class="btn btn-secondary" onclick="mostrarPasoReagendar(1)">← Volver</button>
@@ -1049,41 +978,24 @@ function prepararConfirmacion() {
 async function confirmarReagendado() {
     if (!_slotPendiente) return;
     const ticketId = parseInt(document.getElementById('rTicketId').value);
-
     const payload = {
-        ticket_id  : ticketId,
-        tecnico_id : _slotPendiente.tecnico_id,
-        horario_id : _slotPendiente.horario_id,
-        fecha      : _slotPendiente.fecha,
+        ticket_id: ticketId, tecnico_id: _slotPendiente.tecnico_id,
+        horario_id: _slotPendiente.horario_id, fecha: _slotPendiente.fecha,
     };
-
     const res  = await fetch(`${BASE_URL}?action=ticket.reschedule`, {
-        method : 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body   : JSON.stringify(payload),
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
     });
     const json = await res.json();
-
     if (json.success) {
         const d = json.data;
-
-        // Actualizar el modal del ticket si está abierto
         document.getElementById('fFecha').value     = d.nueva_fecha;
         document.getElementById('fHorarioId').value = d.nuevo_horario_id;
-        document.getElementById('rescheduleSlot').textContent =
-            `${d.nueva_fecha_fmt} a las ${d.nueva_hora} hrs`;
+        document.getElementById('rescheduleSlot').textContent = `${d.nueva_fecha_fmt} a las ${d.nueva_hora} hrs`;
         document.getElementById('rescheduleResult').style.display = 'block';
-
         closeModal('modalReagendar');
-
-        // Ocultar el botón de reagendar en el footer del ticket
         const btnR = document.querySelector('#modalFooter .btn-reschedule');
         if (btnR) btnR.style.display = 'none';
-
-        // Recargar al cerrar el modal de ticket
-        document.getElementById('modalOverlay')
-            .addEventListener('click', () => location.reload(), { once: true });
-
+        document.getElementById('modalOverlay').addEventListener('click', () => location.reload(), { once: true });
         mostrarFeedbackReagendar('✓ Reagendado correctamente.', 'success');
     } else {
         mostrarPasoReagendar(1);
@@ -1096,28 +1008,21 @@ async function confirmarReagendado() {
 async function reagendarAutomatico() {
     const ticketId = parseInt(document.getElementById('rTicketId').value);
     mostrarFeedbackReagendar('⏳ Buscando siguiente slot disponible...', 'info');
-
     const res  = await fetch(`${BASE_URL}?action=ticket.reschedule`, {
-        method : 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body   : JSON.stringify({ ticket_id: ticketId }),
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ticket_id: ticketId }),
     });
     const json = await res.json();
-
     if (json.success) {
         const d = json.data;
         document.getElementById('fFecha').value     = d.nueva_fecha;
         document.getElementById('fHorarioId').value = d.nuevo_horario_id;
-        document.getElementById('rescheduleSlot').textContent =
-            `${d.nueva_fecha_fmt} a las ${d.nueva_hora} hrs`;
+        document.getElementById('rescheduleSlot').textContent = `${d.nueva_fecha_fmt} a las ${d.nueva_hora} hrs`;
         document.getElementById('rescheduleResult').style.display = 'block';
-
         closeModal('modalReagendar');
         const btnR = document.querySelector('#modalFooter .btn-reschedule');
         if (btnR) btnR.style.display = 'none';
-
-        document.getElementById('modalOverlay')
-            .addEventListener('click', () => location.reload(), { once: true });
+        document.getElementById('modalOverlay').addEventListener('click', () => location.reload(), { once: true });
     } else {
         mostrarFeedbackReagendar(json.message || 'No se encontró slot disponible.', 'error');
     }
@@ -1208,8 +1113,6 @@ function resetModal() {
         document.getElementById(`lCliente${n}`).value = '';
         document.getElementById(`lStatus${n}`).textContent = '';
         document.getElementById(`llamadaBloque${n}`).classList.remove('llamada-guardada');
-        
-        // Restaurar accesibilidad para las siguientes veces
         document.getElementById(`lTecnico${n}`).removeAttribute('readonly');
         document.getElementById(`lCliente${n}`).removeAttribute('readonly');
         const btnSave = document.querySelector(`#llamadaBloque${n} .btn-save-llamada`);
@@ -1224,174 +1127,130 @@ function showFeedback(msg, type) {
     el.textContent = msg; el.className = 'feedback ' + type;
 }
 
-    /* ── Modal técnico ──────────────────────────────────────────── */
-    function onTablMotivoChange() {
-        const motivo = document.getElementById('tMotivo').value;
-        const fechas = document.getElementById('tCamposFechas');
-        const horas  = document.getElementById('tCamposHoras');
-        const desc   = document.getElementById('tCamposDesc');
-        fechas.classList.toggle('visible', motivo !== '');
-        horas.classList.toggle('visible',  motivo === 'mecanico');
-        if (motivo === 'mecanico' || motivo === 'apoyo') {
-            desc.style.display = 'block';
-        } else {
-            desc.style.display = 'none';
-        }
-    }
+/* ── Modal disponibilidad técnico ───────────────────────── */
+function onTablMotivoChange() {
+    const motivo = document.getElementById('tMotivo').value;
+    document.getElementById('tCamposFechas').classList.toggle('visible', motivo !== '');
+    document.getElementById('tCamposHoras').classList.toggle('visible',  motivo === 'mecanico');
+    document.getElementById('tCamposDesc').style.display =
+        (motivo === 'mecanico' || motivo === 'apoyo') ? 'block' : 'none';
+}
 
-    function poblarHorasGrid() {
-        const grid = document.getElementById('tHorasGrid');
-        if (grid.children.length > 0) return;
-        const todas = document.createElement('label');
-        todas.className = 'hora-check-sm todas-sm';
-        todas.dataset.value = 'todas';
-        todas.textContent = 'Todas las horas';
-        todas.onclick = () => toggleHoraSm(todas);
-        grid.appendChild(todas);
-        HORARIOS_SISTEMA.forEach(h => {
-            const lbl = document.createElement('label');
-            lbl.className = 'hora-check-sm';
-            lbl.dataset.value = h.horario_id;
-            lbl.textContent = h.hora.substring(0,5);
-            lbl.onclick = () => toggleHoraSm(lbl);
-            grid.appendChild(lbl);
-        });
-    }
-
-    function toggleHoraSm(el) {
-        if (el.classList.contains('todas-sm')) {
-            const sel = el.classList.contains('selected');
-            document.querySelectorAll('#tHorasGrid .hora-check-sm').forEach(h => h.classList.remove('selected'));
-            if (!sel) el.classList.add('selected');
-        } else {
-            document.querySelector('#tHorasGrid .todas-sm')?.classList.remove('selected');
-            el.classList.toggle('selected');
-        }
-    }
-
-    function getHorasSeleccionadasSm() {
-        if (document.querySelector('#tHorasGrid .todas-sm.selected')) return null;
-        const ids = [];
-        document.querySelectorAll('#tHorasGrid .hora-check-sm:not(.todas-sm).selected')
-            .forEach(el => ids.push(parseInt(el.dataset.value)));
-        return ids.length ? ids : [];
-    }
+function poblarHorasGrid() {
+    const grid = document.getElementById('tHorasGrid');
+    if (grid.children.length > 0) return;
+    HORARIOS_SISTEMA.forEach(h => {
+        const lbl = document.createElement('label');
+        lbl.className = 'hora-check-sm';
+        lbl.dataset.value = h.horario_id;
+        lbl.textContent = h.hora.substring(0,5);
+        lbl.onclick = () => lbl.classList.toggle('selected');
+        grid.appendChild(lbl);
+    });
+}
 
 function openEditTecnicoModal(btn) {
-        document.getElementById('tTecnicoId').value           = btn.dataset.tecnicoId;
-        document.getElementById('tBloqueoId').value           = btn.dataset.bloqueoId || ''; // Leer ID de bloqueo
-        document.getElementById('tTecnicoNombre').textContent = btn.dataset.tecnicoNombre;
-        document.getElementById('tMotivo').value              = btn.dataset.motivo || '';
-        document.getElementById('tDescripcion').value         = btn.dataset.desc || '';
-        document.getElementById('tFechaInicio').value         = btn.dataset.inicio;
-        document.getElementById('tFechaFin').value            = btn.dataset.fin;
+    document.getElementById('tTecnicoId').value           = btn.dataset.tecnicoId;
+    document.getElementById('tBloqueoId').value           = btn.dataset.bloqueoId || '';
+    document.getElementById('tTecnicoNombre').textContent = btn.dataset.tecnicoNombre;
+    document.getElementById('tMotivo').value              = btn.dataset.motivo || '';
+    document.getElementById('tDescripcion').value         = btn.dataset.desc || '';
+    document.getElementById('tFechaInicio').value         = btn.dataset.inicio;
+    document.getElementById('tFechaFin').value            = btn.dataset.fin;
 
-        // Limpiar horas previas
-        document.querySelectorAll('#tHorasGrid .hora-check-sm').forEach(h => h.classList.remove('selected'));
-        poblarHorasGrid();
+    document.querySelectorAll('#tHorasGrid .hora-check-sm').forEach(h => h.classList.remove('selected'));
+    poblarHorasGrid();
 
-        // Si es mecánico y hay horas guardadas, seleccionarlas
-        const horasVal = btn.dataset.horas;
-        if (btn.dataset.motivo === 'mecanico' && horasVal) {
-            try {
-                const horasIds = JSON.parse(horasVal);
-                if (!horasIds || horasIds.length === 0) {
-                    document.querySelector('#tHorasGrid .todas-sm')?.classList.add('selected');
-                } else {
-                    horasIds.forEach(hid => {
-                        const lbl = document.querySelector(`#tHorasGrid .hora-check-sm[data-value="${hid}"]`);
-                        if (lbl) lbl.classList.add('selected');
-                    });
-                }
-            } catch(e) {}
-        }
-
-        onTablMotivoChange();
-        const fb = document.getElementById('tecnicoFeedback');
-        fb.className = 'feedback';
-        fb.textContent = '';
-        openModal('modalTecnico');
+    const horasVal = btn.dataset.horas;
+    if (btn.dataset.motivo === 'mecanico' && horasVal) {
+        try {
+            const horasIds = JSON.parse(horasVal);
+            if (Array.isArray(horasIds)) {
+                horasIds.forEach(hid => {
+                    const lbl = document.querySelector(`#tHorasGrid .hora-check-sm[data-value="${hid}"]`);
+                    if (lbl) lbl.classList.add('selected');
+                });
+            }
+        } catch(e) {}
     }
 
-    async function saveTecnicoStatus() {
-        const id        = parseInt(document.getElementById('tTecnicoId').value);
-        const bloqueoId = document.getElementById('tBloqueoId').value;
-        const motivo    = document.getElementById('tMotivo').value || null;
-        const fb        = document.getElementById('tecnicoFeedback');
+    onTablMotivoChange();
+    const fb = document.getElementById('tecnicoFeedback');
+    fb.className = 'feedback'; fb.textContent = '';
+    openModal('modalTecnico');
+}
 
-        // LÓGICA DE ELIMINACIÓN: Si cambia a "Disponible" y había un bloqueo activo, lo borramos.
-        if (!motivo) {
-            if (bloqueoId) {
-                const res = await fetch(`${BASE_URL}?action=bloqueo.delete`, {
-                    method:'POST', headers:{'Content-Type':'application/json'}, 
-                    body:JSON.stringify({ bloqueo_id: parseInt(bloqueoId) })
-                });
-                const json = await res.json();
-                if (json.success) {
-                    fb.textContent = '✓ Disponibilidad restaurada. Recargando...'; fb.className = 'feedback success';
-                    setTimeout(() => location.reload(), 800);
-                } else {
-                    fb.textContent = json.message || 'Error'; fb.className = 'feedback error';
-                }
+async function saveTecnicoStatus() {
+    const id        = parseInt(document.getElementById('tTecnicoId').value);
+    const bloqueoId = document.getElementById('tBloqueoId').value;
+    const motivo    = document.getElementById('tMotivo').value || null;
+    const fb        = document.getElementById('tecnicoFeedback');
+
+    // Sin motivo → restaurar disponibilidad eliminando el bloqueo
+    if (!motivo) {
+        if (bloqueoId) {
+            const res = await fetch(`${BASE_URL}?action=bloqueo.delete`, {
+                method:'POST', headers:{'Content-Type':'application/json'},
+                body:JSON.stringify({ bloqueo_id: parseInt(bloqueoId) })
+            });
+            const json = await res.json();
+            if (json.success) {
+                fb.textContent = '✓ Disponibilidad restaurada. Recargando...'; fb.className = 'feedback success';
+                setTimeout(() => location.reload(), 800);
             } else {
-                closeModal('modalTecnico'); // Ya estaba disponible y no se cambió nada
+                fb.textContent = json.message || 'Error'; fb.className = 'feedback error';
             }
+        } else {
+            closeModal('modalTecnico');
+        }
+        return;
+    }
+
+    // Con motivo → crear / actualizar bloqueo
+    const payload = {
+        tecnico_id   : id,
+        motivo       : motivo,
+        fecha_inicio : document.getElementById('tFechaInicio').value,
+        fecha_fin    : document.getElementById('tFechaFin').value,
+        descripcion  : document.getElementById('tDescripcion').value.trim() || null,
+    };
+
+    if (!payload.fecha_inicio || !payload.fecha_fin) {
+        fb.textContent = 'Las fechas son obligatorias.'; fb.className = 'feedback error'; return;
+    }
+    if (payload.fecha_inicio > payload.fecha_fin) {
+        fb.textContent = 'La fecha de inicio no puede ser posterior a la fecha final.'; fb.className = 'feedback error'; return;
+    }
+    if ((motivo === 'mecanico' || motivo === 'apoyo') && !payload.descripcion) {
+        fb.textContent = 'El motivo/descripción es obligatorio.'; fb.className = 'feedback error'; return;
+    }
+
+    if (motivo === 'mecanico') {
+        const selectedLabels = document.querySelectorAll('#tHorasGrid .hora-check-sm.selected');
+        if (selectedLabels.length === 0) {
+            fb.textContent = 'Selecciona al menos una hora para bloquear.';
+            fb.className = 'feedback error';
             return;
         }
-
-        // LÓGICA DE CREACIÓN/ACTUALIZACIÓN
-        const payload = { 
-            tecnico_id: id, 
-            motivo: motivo,
-            fecha_inicio: document.getElementById('tFechaInicio').value,
-            fecha_fin: document.getElementById('tFechaFin').value,
-            descripcion: document.getElementById('tDescripcion').value.trim() || null
-        };
-
-        if (!payload.fecha_inicio || !payload.fecha_fin) {
-            fb.textContent = 'Las fechas son obligatorias.'; fb.className = 'feedback error'; return;
-        }
-        if (payload.fecha_inicio > payload.fecha_fin) {
-            fb.textContent = 'La fecha de inicio no puede ser posterior a la fecha final.'; fb.className = 'feedback error'; return;
-        }
-        if ((motivo === 'mecanico' || motivo === 'apoyo') && !payload.descripcion) {
-            fb.textContent = 'El motivo/descripción es obligatorio.'; fb.className = 'feedback error'; return;
-        }
-        if (motivo === 'mecanico') {
-            // Verificar primero si el botón de "Todas" está seleccionado
-            const btnTodas = document.querySelector('#tHorasGrid .todas-sm');
-            const isTodasSelected = btnTodas && btnTodas.classList.contains('selected');
-            
-            if (isTodasSelected) {
-                payload.horas_ids = null; // Backend interpreta null como "Todo el día"
-            } else {
-                const horas = getHorasSeleccionadasSm();
-                if (!horas || horas.length === 0) {
-                    fb.textContent = 'Selecciona al menos una hora o "Todas".'; 
-                    fb.className = 'feedback error'; 
-                    return;
-                }
-                payload.horas_ids = horas;
-            }
-        }
-
-        let url = `${BASE_URL}?action=bloqueo.store`;
-        if (bloqueoId) {
-            url = `${BASE_URL}?action=bloqueo.update`;
-            payload.bloqueo_id = parseInt(bloqueoId);
-        }
-
-        const res  = await fetch(url, {
-            method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload),
-        });
-        const json = await res.json();
-        if (json.success) {
-            fb.textContent = '✓ Guardado. Recargando...'; fb.className = 'feedback success';
-            setTimeout(() => location.reload(), 800);
-        } else {
-            fb.textContent = json.message || 'Error'; fb.className = 'feedback error';
-        }
+        payload.horas_ids = Array.from(selectedLabels).map(el => parseInt(el.dataset.value));
     }
+
+    const url = bloqueoId
+        ? `${BASE_URL}?action=bloqueo.update`
+        : `${BASE_URL}?action=bloqueo.store`;
+    if (bloqueoId) payload.bloqueo_id = parseInt(bloqueoId);
+
+    const res  = await fetch(url, {
+        method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload),
+    });
+    const json = await res.json();
+    if (json.success) {
+        fb.textContent = '✓ Guardado. Recargando...'; fb.className = 'feedback success';
+        setTimeout(() => location.reload(), 800);
+    } else {
+        fb.textContent = json.message || 'Error'; fb.className = 'feedback error';
+    }
+}
 
 /* ── Helpers de modales ─────────────────────────────────── */
 function openModal(id)  { document.getElementById(id).classList.add('open'); }
@@ -1420,12 +1279,10 @@ function fechaLocalActual() {
     const h = new Date();
     return h.getFullYear() + '-' + String(h.getMonth()+1).padStart(2,'0') + '-' + String(h.getDate()).padStart(2,'0');
 }
-
 async function verificarAlertas() {
     if (Notification.permission !== 'granted') return;
     if (FECHA_TABLERO !== FECHA_HOY_SERVIDOR) return;
     if (FECHA_HOY_SERVIDOR !== fechaLocalActual()) return;
-
     let tickets;
     try {
         const res = await fetch(`${BASE_URL}?action=notif.tickets`, { cache: 'no-store' });
@@ -1434,10 +1291,8 @@ async function verificarAlertas() {
         if (!json.success) return;
         tickets = json.tickets;
     } catch { return; }
-
     const horaActual = horaLocalActual();
     const fechaHoy   = fechaLocalActual();
-
     tickets.forEach(t => {
         if (t.hora_alerta !== horaActual) return;
         const key = `ticket-${t.ticket_id}-${fechaHoy}`;
@@ -1446,18 +1301,15 @@ async function verificarAlertas() {
         const notif = new Notification('⚠ Precaución!', {
             body : `El ticket asignado a ${t.tecnico_nombre} está a punto de expirar.`,
             icon : `${BASE_URL}public/icon.png`,
-            tag  : key,
-            requireInteraction: true,
+            tag  : key, requireInteraction: true,
         });
         notif.onclick = () => { window.focus(); notif.close(); };
     });
 }
-
 function inicializarNotificaciones() {
     if (!('Notification' in window)) return;
     if (Notification.permission === 'granted') {
-        verificarAlertas();
-        setInterval(verificarAlertas, 30000);
+        verificarAlertas(); setInterval(verificarAlertas, 30000);
     } else if (Notification.permission === 'default') {
         document.getElementById('bannerNotif').style.display = 'flex';
     }
@@ -1470,42 +1322,36 @@ async function pedirPermisoNotificaciones() {
 }
 
 /* ══════════════════════════════════════════════════════════
-   ESTADO DEL TICKET (Completado / Revertir)
+   ESTADO DEL TICKET
 ══════════════════════════════════════════════════════════ */
 async function toggleEstado(ticketId, nuevoEstado) {
     const res  = await fetch(`${BASE_URL}?action=ticket.setEstado`, {
-        method : 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method : 'POST', headers: { 'Content-Type': 'application/json' },
         body   : JSON.stringify({ ticket_id: ticketId, estado: nuevoEstado }),
     });
     const json = await res.json();
     if (json.success) {
-        // Recargar para actualizar el color de la celda en el tablero
         location.reload();
     } else {
         showFeedback(json.message || 'Error al cambiar el estado.', 'error');
     }
 }
+
 /* ══════════════════════════════════════════════════════════
-   BUSCADOR DE TICKETS (rol 4 y 5)
+   BUSCADOR DE TICKETS
 ══════════════════════════════════════════════════════════ */
 async function buscarTicket() {
     const q = document.getElementById('searchTicketInput')?.value.trim();
     if (!q) return;
-
     const menu = document.getElementById('searchDropdownMenu');
     menu.innerHTML = '<div class="search-no-results">⏳ Buscando...</div>';
     menu.classList.add('open');
-
     try {
         const res  = await fetch(`${BASE_URL}?action=ticket.search&q=${encodeURIComponent(q)}`, { cache: 'no-store' });
         const json = await res.json();
-
         if (!json.success || !json.data.results.length) {
-            menu.innerHTML = '<div class="search-no-results">No se encontraron tickets.</div>';
-            return;
+            menu.innerHTML = '<div class="search-no-results">No se encontraron tickets.</div>'; return;
         }
-
         menu.innerHTML = json.data.results.map(r => `
             <div class="search-result-item"
                  onclick="irATicket('${r.fecha}', ${r.tecnico_id}, ${r.horario_id})">
@@ -1520,14 +1366,10 @@ async function buscarTicket() {
         menu.innerHTML = '<div class="search-no-results">Error al buscar.</div>';
     }
 }
-
 function irATicket(fecha, tecnicoId, horarioId) {
     document.getElementById('searchDropdownMenu').classList.remove('open');
-    // Navegar al tablero en la fecha del ticket con parámetros de highlight
     window.location.href = `${BASE_URL}?action=tablero&fecha=${fecha}&hl_tec=${tecnicoId}&hl_hor=${horarioId}`;
 }
-
-// Cerrar dropdown de búsqueda al hacer clic fuera
 document.addEventListener('click', e => {
     const wrap = document.getElementById('searchDropdown');
     if (wrap && !wrap.contains(e.target)) {
@@ -1535,39 +1377,24 @@ document.addEventListener('click', e => {
     }
 });
 
-// Al cargar, si hay parámetros hl_tec y hl_hor, parpadear la celda
+// Highlight al cargar desde búsqueda
 (function highlightOnLoad() {
-    const params   = new URLSearchParams(window.location.search);
-    const hlTec    = params.get('hl_tec');
-    const hlHor    = params.get('hl_hor');
+    const params = new URLSearchParams(window.location.search);
+    const hlTec  = params.get('hl_tec');
+    const hlHor  = params.get('hl_hor');
     if (!hlTec || !hlHor) return;
-
-    // Buscar la celda por data attributes
-    const celda = document.querySelector(
-        `td[data-tecnico-id="${hlTec}"][data-horario-id="${hlHor}"]`
-    );
+    const celda = document.querySelector(`td[data-tecnico-id="${hlTec}"][data-horario-id="${hlHor}"]`);
     if (!celda) return;
-
-    // Scroll a la celda centrada en la pantalla
     celda.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-    // Parpadeo controlado por JavaScript (evita conflictos de CSS !important)
     let parpadeos = 0;
-    const maxParpadeos = 21; // 21 ciclos de 500ms = 10.5 segundos exactos
-    
-    // Iniciar con la clase activada
     celda.classList.add('cell-highlight-strong');
-    
     const intervalo = setInterval(() => {
         celda.classList.toggle('cell-highlight-strong');
         parpadeos++;
-        
-        if (parpadeos >= maxParpadeos) {
-            clearInterval(intervalo);
-            celda.classList.remove('cell-highlight-strong');
-        }
+        if (parpadeos >= 21) { clearInterval(intervalo); celda.classList.remove('cell-highlight-strong'); }
     }, 500);
 })();
+
 inicializarNotificaciones();
 </script>
 </body>
