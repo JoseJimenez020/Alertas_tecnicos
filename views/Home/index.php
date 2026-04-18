@@ -513,7 +513,7 @@ $fechaHoy     = date('Y-m-d');
 
                 // ── SIEMPRE usa bloqueos de HOY para la lista ──────────
                 $bActivo = $bloquesDiaHoy[$tecId][0] ?? null;
-                $disp    = empty($bloqueosCeldaHoy[$tecId]['_todo']);
+                $disp    = empty($bloquesDiaHoy[$tecId]);
                 $mot     = $bActivo['motivo'] ?? '';
                 $liClass = $disp ? 'list-item' : 'list-item nodisponible';
 
@@ -795,7 +795,27 @@ async function openViewMode(ticketId) {
     const soloLectura = (ROL_ID === 5);
 
     if (soloLectura) {
-        document.getElementById('llamadasSection').style.display = 'none';
+        document.getElementById('llamadasSection').style.display = 'block';
+        for (let n = 1; n <= 3; n++) {
+            const ll = (t.llamadas && t.llamadas[n]) || {};
+            const inputTecnico = document.getElementById(`lTecnico${n}`);
+            const inputCliente = document.getElementById(`lCliente${n}`);
+            const bloque = document.getElementById(`llamadaBloque${n}`);
+            const status = document.getElementById(`lStatus${n}`);
+            const btnSave = bloque.querySelector('.btn-save-llamada');
+
+            inputTecnico.value = ll.respuesta_tecnico || '';
+            inputCliente.value = ll.respuesta_cliente || '';
+            inputTecnico.setAttribute('readonly', true);
+            inputCliente.setAttribute('readonly', true);
+            if (btnSave) btnSave.style.display = 'none';
+
+            if (ll.llamada_id) {
+                bloque.classList.add('llamada-guardada');
+                status.textContent = '✓ Guardada';
+                status.style.color = '#155724';
+            }
+        }
     } else {
         document.getElementById('llamadasSection').style.display = 'block';
         for (let n = 1; n <= 3; n++) {
