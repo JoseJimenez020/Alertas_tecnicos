@@ -59,23 +59,23 @@ class TicketModel
      */
     public function getForReport(array $filtros = []): array
     {
-        $where  = [];
+        $where = [];
         $params = [];
 
         if (!empty($filtros['tecnico_id'])) {
-            $where[]  = 'tt.tecnico_id = :tecnico_id';
+            $where[] = 'tt.tecnico_id = :tecnico_id';
             $params[':tecnico_id'] = (int) $filtros['tecnico_id'];
         }
         if (!empty($filtros['fecha_desde'])) {
-            $where[]  = 'tt.fecha >= :fecha_desde';
+            $where[] = 'tt.fecha >= :fecha_desde';
             $params[':fecha_desde'] = $filtros['fecha_desde'];
         }
         if (!empty($filtros['fecha_hasta'])) {
-            $where[]  = 'tt.fecha <= :fecha_hasta';
+            $where[] = 'tt.fecha <= :fecha_hasta';
             $params[':fecha_hasta'] = $filtros['fecha_hasta'];
         }
         if (!empty($filtros['usuario_id'])) {
-            $where[]  = 'tt.usuario_id = :usuario_id';
+            $where[] = 'tt.usuario_id = :usuario_id';
             $params[':usuario_id'] = (int) $filtros['usuario_id'];
         }
         if (!empty($filtros['estado'])) {
@@ -135,15 +135,15 @@ class TicketModel
                 (:usuario_id, :fecha, :horario_id, :tecnico_id, :cliente, :colonia, :ticket, :descripcion, :telefono)
         ");
         $stmt->execute([
-            ':usuario_id'  => $data['usuario_id'],
-            ':fecha'       => $data['fecha'],
-            ':horario_id'  => $data['horario_id'],
-            ':tecnico_id'  => $data['tecnico_id'],
-            ':cliente'     => $data['cliente'],
-            ':colonia'     => $data['colonia'],
-            ':ticket'      => $data['ticket_num'],
+            ':usuario_id' => $data['usuario_id'],
+            ':fecha' => $data['fecha'],
+            ':horario_id' => $data['horario_id'],
+            ':tecnico_id' => $data['tecnico_id'],
+            ':cliente' => $data['cliente'],
+            ':colonia' => $data['colonia'],
+            ':ticket' => $data['ticket_num'],
             ':descripcion' => $data['descripcion'],
-            ':telefono'    => $data['telefono'],
+            ':telefono' => $data['telefono'],
         ]);
         return (int) $this->db->lastInsertId();
     }
@@ -162,14 +162,14 @@ class TicketModel
             WHERE ticket_id  = :id
         ");
         return $stmt->execute([
-            ':cliente'     => $data['cliente'],
-            ':colonia'     => $data['colonia'],
-            ':ticket_num'  => $data['ticket_num'],
+            ':cliente' => $data['cliente'],
+            ':colonia' => $data['colonia'],
+            ':ticket_num' => $data['ticket_num'],
             ':descripcion' => $data['descripcion'],
-            ':telefono'    => $data['telefono'],
-            ':horario_id'  => $data['horario_id'],
-            ':tecnico_id'  => $data['tecnico_id'],
-            ':id'          => $id,
+            ':telefono' => $data['telefono'],
+            ':horario_id' => $data['horario_id'],
+            ':tecnico_id' => $data['tecnico_id'],
+            ':id' => $id,
         ]);
     }
 
@@ -224,7 +224,8 @@ class TicketModel
     private function nextWorkday(string $fecha): string
     {
         $dow = (int) date('w', strtotime($fecha));
-        if ($dow === 0) return date('Y-m-d', strtotime($fecha . ' +1 day'));
+        if ($dow === 0)
+            return date('Y-m-d', strtotime($fecha . ' +1 day'));
         return $fecha;
     }
 
@@ -234,9 +235,12 @@ class TicketModel
         return $this->nextWorkday($next);
     }
 
-    private function isWorkday(string $fecha): bool
+    private function isWorkday(string $fecha, int $tecnicoId = 0): bool
     {
         $dow = (int) date('w', strtotime($fecha));
+        // Técnico ID 11 puede trabajar domingos
+        if ($tecnicoId === 11)
+            return $dow >= 0 && $dow <= 6;
         return $dow >= 1 && $dow <= 6;
     }
 
@@ -257,10 +261,13 @@ class TicketModel
     {
         $bloqueosTec = $bloqueosCache[$tecnicoId] ?? [];
         foreach ($bloqueosTec as $b) {
-            if ($fecha < $b['fecha_inicio'] || $fecha > $b['fecha_fin']) continue;
+            if ($fecha < $b['fecha_inicio'] || $fecha > $b['fecha_fin'])
+                continue;
             $horas = $b['horas_ids'] ?? null;
-            if ($horas === null) return true;                        // bloqueo total del día
-            if (in_array($horarioId, (array) $horas)) return true;  // hora específica bloqueada
+            if ($horas === null)
+                return true;                        // bloqueo total del día
+            if (in_array($horarioId, (array) $horas))
+                return true;  // hora específica bloqueada
         }
         return false;
     }
@@ -268,7 +275,8 @@ class TicketModel
     public function getNextAvailableSlot(int $tecnicoId, int $currentHorarioId, string $currentFecha): ?array
     {
         $horarios = $this->getAllHorarios();
-        if (empty($horarios)) return null;
+        if (empty($horarios))
+            return null;
 
         // Pre-cargar bloqueos del técnico para los próximos 30 días
         $hasta = date('Y-m-d', strtotime($currentFecha . ' +35 days'));
@@ -276,24 +284,31 @@ class TicketModel
         $bloqueosCache = $bloqueModel->getActivosEnRango([$tecnicoId], $currentFecha, $hasta);
 
         $posMap = [];
-        foreach ($horarios as $i => $h) $posMap[(int)$h['horario_id']] = $i;
+        foreach ($horarios as $i => $h)
+            $posMap[(int) $h['horario_id']] = $i;
 
-        $total      = count($horarios);
+        $total = count($horarios);
         $currentPos = $posMap[$currentHorarioId] ?? -1;
-        $startPos   = $currentPos + 1;
-        $fecha      = $currentFecha;
+        $startPos = $currentPos + 1;
+        $fecha = $currentFecha;
 
         for ($day = 0; $day < 30; $day++) {
-            $fecha = $this->nextWorkday($fecha);
+            $fecha = ($tecnicoId === 11)
+                ? $fecha
+                : $this->nextWorkday($fecha);
             $desde = ($day === 0) ? $startPos : 0;
             for ($i = $desde; $i < $total; $i++) {
-                $h   = $horarios[$i];
-                $hId = (int)$h['horario_id'];
-                if ($this->exists($tecnicoId, $hId, $fecha)) continue;
-                if ($this->isSlotBloqueado($tecnicoId, $fecha, $hId, $bloqueosCache)) continue;
+                $h = $horarios[$i];
+                $hId = (int) $h['horario_id'];
+                if ($this->exists($tecnicoId, $hId, $fecha))
+                    continue;
+                if ($this->isSlotBloqueado($tecnicoId, $fecha, $hId, $bloqueosCache))
+                    continue;
                 return ['fecha' => $fecha, 'horario_id' => $hId, 'hora' => $h['hora']];
             }
-            $fecha    = $this->nextWorkdayAfter($fecha);
+            $fecha = ($tecnicoId === 11)
+                ? date('Y-m-d', strtotime($fecha . ' +1 day'))
+                : $this->nextWorkdayAfter($fecha);
             $startPos = 0;
         }
         return null;
@@ -302,7 +317,8 @@ class TicketModel
     public function getAvailableSlotsForReschedule(int $excludeTicketId, string $fromFecha, int $diasBusqueda = 5): array
     {
         $horarios = $this->getAllHorarios();
-        if (empty($horarios)) return [];
+        if (empty($horarios))
+            return [];
 
         $stmt = $this->db->query("
             SELECT t.TecnicoId, t.TecnicoNombre, z.zona_nombre
@@ -311,17 +327,19 @@ class TicketModel
         ");
         $tecnicos = $stmt->fetchAll();
 
+        // Los días laborables se calculan por técnico (técnico 11 puede trabajar domingos)
+        // Se usa el rango más amplio posible: se aplica por técnico al filtrar slots abajo
         $diasLaborables = [];
         $cursor = $fromFecha;
-        while (count($diasLaborables) < $diasBusqueda) {
-            if ($this->isWorkday($cursor)) $diasLaborables[] = $cursor;
+        while (count($diasLaborables) < $diasBusqueda + 1) { // +1 para cubrir el domingo extra
+            $diasLaborables[] = $cursor;
             $cursor = date('Y-m-d', strtotime($cursor . ' +1 day'));
         }
 
         // Pre-cargar bloqueos de todos los técnicos activos en el rango
         $hasta = end($diasLaborables);
-        $tecIds = array_map(fn($t) => (int)$t['TecnicoId'], $tecnicos);
-        $bloqueModel   = new BloqueModel();
+        $tecIds = array_map(fn($t) => (int) $t['TecnicoId'], $tecnicos);
+        $bloqueModel = new BloqueModel();
         $bloqueosCache = $bloqueModel->getActivosEnRango($tecIds, $fromFecha, $hasta);
 
         $resultado = [];
@@ -329,6 +347,8 @@ class TicketModel
             $tecId = (int) $tec['TecnicoId'];
             $slots = [];
             foreach ($diasLaborables as $fecha) {
+                // Saltar domingos salvo para el técnico 11
+                if ((int) date('w', strtotime($fecha)) === 0 && $tecId !== 11) continue;
                 foreach ($horarios as $h) {
                     $hId = (int) $h['horario_id'];
                     // Verificar ticket existente (excluyendo el que se está reagendando)
@@ -337,25 +357,27 @@ class TicketModel
                         WHERE tecnico_id = :t AND horario_id = :h AND fecha = :f AND ticket_id != :excl
                     ");
                     $stmt2->execute([':t' => $tecId, ':h' => $hId, ':f' => $fecha, ':excl' => $excludeTicketId]);
-                    if ((int)$stmt2->fetchColumn()) continue;
+                    if ((int) $stmt2->fetchColumn())
+                        continue;
                     // Verificar bloqueo
-                    if ($this->isSlotBloqueado($tecId, $fecha, $hId, $bloqueosCache)) continue;
+                    if ($this->isSlotBloqueado($tecId, $fecha, $hId, $bloqueosCache))
+                        continue;
 
                     $slots[] = [
                         'horario_id' => $hId,
-                        'hora'       => $h['hora'],
-                        'fecha'      => $fecha,
-                        'fecha_fmt'  => date('d/m/Y', strtotime($fecha)),
-                        'label'      => date('d/m/Y', strtotime($fecha)) . ' — ' . $h['hora'],
+                        'hora' => $h['hora'],
+                        'fecha' => $fecha,
+                        'fecha_fmt' => date('d/m/Y', strtotime($fecha)),
+                        'label' => date('d/m/Y', strtotime($fecha)) . ' — ' . $h['hora'],
                     ];
                 }
             }
             if (!empty($slots)) {
                 $resultado[] = [
-                    'tecnico_id'  => $tecId,
-                    'nombre'      => $tec['TecnicoNombre'],
+                    'tecnico_id' => $tecId,
+                    'nombre' => $tec['TecnicoNombre'],
                     'zona_nombre' => $tec['zona_nombre'] ?? '',
-                    'slots'       => $slots,
+                    'slots' => $slots,
                 ];
             }
         }
