@@ -26,6 +26,13 @@ class TicketController
         if ($model->exists((int) $body['tecnico_id'], (int) $body['horario_id'], $body['fecha']))
             $this->jsonError('Ya existe un ticket para ese técnico en ese horario.', 409);
 
+        // Validar el tipo de ticket asegurando que si no es el usuario 2, forzosamente sea 1.
+        $tipo_ticket = isset($body['tipo_ticket']) ? (int) $body['tipo_ticket'] : 1;
+        if ($tipo_ticket === 2 && (int) $usuario['id'] !== 2) {
+            $tipo_ticket = 1;
+        }
+        $caja_puerto = $body['caja_puerto'] ?? '';
+
         $id = $model->create([
             'usuario_id' => $usuario['id'],
             'fecha' => $body['fecha'],
@@ -36,6 +43,8 @@ class TicketController
             'ticket_num' => $body['ticket_num'],
             'descripcion' => $body['descripcion'],
             'telefono' => $body['telefono'],
+            'tipo_ticket' => $tipo_ticket,
+            'caja_puerto' => $caja_puerto,
         ]);
         $this->jsonSuccess(['ticket_id' => $id, 'rol_id' => $usuario['rol_id']]);
     }
@@ -68,6 +77,13 @@ class TicketController
         if (!$id)
             $this->jsonError('ID de ticket inválido.', 422);
 
+        // Validar el tipo de ticket asegurando que si no es el usuario 2, forzosamente sea 1.
+        $tipo_ticket = isset($body['tipo_ticket']) ? (int) $body['tipo_ticket'] : 1;
+        if ($tipo_ticket === 2 && (int) $usuario['id'] !== 2) {
+            $tipo_ticket = 1;
+        }
+        $caja_puerto = $body['caja_puerto'] ?? '';
+
         $model = new TicketModel();
         $ticket = $model->findById($id);
         if (!$ticket)
@@ -85,6 +101,8 @@ class TicketController
             'telefono' => $body['telefono'],
             'horario_id' => (int) $body['horario_id'],
             'tecnico_id' => (int) $body['tecnico_id'],
+            'tipo_ticket' => $tipo_ticket,
+            'caja_puerto' => $caja_puerto,
         ]);
         $this->jsonSuccess(['updated' => true]);
     }

@@ -21,7 +21,7 @@ class TicketModel
         $stmt = $this->db->prepare("
             SELECT tt.ticket_id, tt.tecnico_id, tt.horario_id,
                    tt.Cliente, tt.colonia, tt.Ticket, tt.Descripcion, tt.Telefono,
-                   tt.usuario_id, tt.estado,
+                   tt.usuario_id, tt.estado, tt.tipo_ticket,
                    u.nombre  AS agente_nombre,
                    u.rol_id  AS agente_rol,
                    COUNT(tl.llamada_id) AS total_llamadas
@@ -130,9 +130,9 @@ class TicketModel
     {
         $stmt = $this->db->prepare("
             INSERT INTO tm_ticket
-                (usuario_id, fecha, horario_id, tecnico_id, Cliente, colonia, Ticket, Descripcion, Telefono)
+                (usuario_id, fecha, horario_id, tecnico_id, Cliente, colonia, Ticket, Descripcion, Telefono, tipo_ticket, caja_puerto)
             VALUES
-                (:usuario_id, :fecha, :horario_id, :tecnico_id, :cliente, :colonia, :ticket, :descripcion, :telefono)
+                (:usuario_id, :fecha, :horario_id, :tecnico_id, :cliente, :colonia, :ticket, :descripcion, :telefono, :tipo_ticket, :caja_puerto)
         ");
         $stmt->execute([
             ':usuario_id' => $data['usuario_id'],
@@ -144,6 +144,8 @@ class TicketModel
             ':ticket' => $data['ticket_num'],
             ':descripcion' => $data['descripcion'],
             ':telefono' => $data['telefono'],
+            ':tipo_ticket' => $data['tipo_ticket'],
+            ':caja_puerto' => $data['caja_puerto'],
         ]);
         return (int) $this->db->lastInsertId();
     }
@@ -158,7 +160,9 @@ class TicketModel
                 Descripcion  = :descripcion,
                 Telefono     = :telefono,
                 horario_id   = :horario_id,
-                tecnico_id   = :tecnico_id
+                tecnico_id   = :tecnico_id,
+                tipo_ticket  = :tipo_ticket,
+                caja_puerto  = :caja_puerto
             WHERE ticket_id  = :id
         ");
         return $stmt->execute([
@@ -169,6 +173,8 @@ class TicketModel
             ':telefono' => $data['telefono'],
             ':horario_id' => $data['horario_id'],
             ':tecnico_id' => $data['tecnico_id'],
+            ':tipo_ticket' => $data['tipo_ticket'],
+            ':caja_puerto' => $data['caja_puerto'],
             ':id' => $id,
         ]);
     }
@@ -348,7 +354,8 @@ class TicketModel
             $slots = [];
             foreach ($diasLaborables as $fecha) {
                 // Saltar domingos salvo para el técnico 11
-                if ((int) date('w', strtotime($fecha)) === 0 && $tecId !== 11) continue;
+                if ((int) date('w', strtotime($fecha)) === 0 && $tecId !== 11)
+                    continue;
                 foreach ($horarios as $h) {
                     $hId = (int) $h['horario_id'];
                     // Verificar ticket existente (excluyendo el que se está reagendando)

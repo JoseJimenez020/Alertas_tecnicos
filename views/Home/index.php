@@ -277,10 +277,20 @@
 <body>
 <?php
 function getIconHtml(array $ticket, array $colorMap): string {
-    $rolId  = (int) $ticket['agente_rol'];
-    $userId = (int) $ticket['usuario_id'];
-    $color  = $colorMap[$userId] ?? 'bg-gray';
-    $shape  = ($rolId === 2) ? 'square' : 'circle';
+    $rolId   = (int) $ticket['agente_rol'];
+    $userId  = (int) $ticket['usuario_id'];
+    $color   = $colorMap[$userId] ?? 'bg-gray';
+    $tipo_ticket    = (int) ($ticket['tipo_ticket'] ?? 1);
+
+    if ((int)$tipo_ticket === 2) {
+        // Asegúrate de que el 'fill' use la variable $color
+        return '
+        <svg width="24" height="24" viewBox="0 0 24 24" style="display:block; margin:auto;">
+            <path d="M12 2L2 22h20L12 2z" fill="' . $color . '" stroke="white" stroke-width="1"/>
+        </svg>';
+    }
+
+    $shape = ($rolId === 2) ? 'square' : 'circle';
     return '<span class="' . $shape . ' ' . $color . '"></span>';
 }
 
@@ -590,6 +600,24 @@ $fechaHoy     = date('Y-m-d');
             <input type="text" id="fTicketNum" maxlength="255" placeholder="Ej. TKT-00123">
             <label>Descripción del Incidente</label>
             <textarea id="fDescripcion" maxlength="255" placeholder="Describe el incidente..."></textarea>
+
+            <?php if ((int)$usuario['id'] === 2): ?>
+                <label>Tipo de Ticket</label>
+                <select id="fTipoTicket" onchange="toggleCamposEspeciales()">
+                    <option value="1">Ticket</option>
+                    <option value="2">Retiro de equipo</option>
+                </select>
+            <?php else: ?>
+                <!-- Oculto para todos los demás usuarios para que envíen el valor por defecto -->
+                <input type="hidden" id="fTipoTicket" value="1">
+            <?php endif; ?>
+
+            <!-- Este contenedor iniciará oculto y solo se muestra si es tipo 2 -->
+            <div id="wrapCajaPuerto" style="display:none;">
+                <label>Caja y puerto liberado</label>
+                <input type="text" id="fCajaPuerto" maxlength="255" placeholder="Ej. Caja 3, Puerto 12">
+            </div>
+
             <label>Teléfono de Contacto (10 dígitos)</label>
             <input type="tel" id="fTelefono" maxlength="10" placeholder="9931234567">
 
@@ -627,7 +655,7 @@ $fechaHoy     = date('Y-m-d');
 <div class="modal-overlay" id="modalReagendar">
     <div class="modal-box" style="width:480px;">
         <div class="modal-header">
-            <h3>🔄 Reagendar Ticket</h3>
+            <h3>Reagendar Ticket</h3>
             <button class="modal-close" onclick="closeModal('modalReagendar')">×</button>
         </div>
         <div class="modal-body">
@@ -762,6 +790,12 @@ function openCreateMode(cell) {
         <button class="btn btn-primary" onclick="saveTicket()">Guardar</button>
     `;
     openModal('modalOverlay');
+
+    if(document.getElementById('fTipoTicket')) {
+        document.getElementById('fTipoTicket').value = '1';
+    }
+    document.getElementById('fCajaPuerto').value = '';
+    toggleCamposEspeciales();
 }
 
 async function openViewMode(ticketId) {
@@ -778,6 +812,11 @@ async function openViewMode(ticketId) {
     }
 
     const t = json.data;
+    if(document.getElementById('fTipoTicket')) {
+        document.getElementById('fTipoTicket').value = t.tipo_ticket || '1';
+    }
+    document.getElementById('fCajaPuerto').value = t.caja_puerto || '';
+    toggleCamposEspeciales();
     document.getElementById('modalMeta').textContent =
         `Ticket #${t.ticket_id} | Registrado por: ${t.agente_nombre}`;
 
@@ -890,6 +929,12 @@ async function deleteTicket(ticketId) {
     } else {
         showFeedback(json.message || 'Error al eliminar el ticket.', 'error');
     }
+}
+
+function toggleCamposEspeciales() {
+    const el = document.getElementById('fTipoTicket');
+    const val = el ? el.value : '1';
+    document.getElementById('wrapCajaPuerto').style.display = (val === '2') ? 'block' : 'none';
 }
 
 function abrirModalReagendar(ticketId, agenteName, tecnicoIdActual) {
@@ -1106,6 +1151,8 @@ function buildPayload() {
         ticket_num : document.getElementById('fTicketNum').value.trim(),
         descripcion: document.getElementById('fDescripcion').value.trim(),
         telefono   : document.getElementById('fTelefono').value.trim(),
+        tipo_ticket : document.getElementById('fTipoTicket') ? parseInt(document.getElementById('fTipoTicket').value) : 1,
+        caja_puerto : document.getElementById('fCajaPuerto') ? document.getElementById('fCajaPuerto').value.trim() : ''
     };
 }
 function validatePayload(p) {
@@ -1122,6 +1169,11 @@ function setFieldsReadonly(ro) {
         const el = document.getElementById(id);
         ro ? el.setAttribute('readonly', true) : el.removeAttribute('readonly');
     });
+
+    if(document.getElementById('fTipoTicket') && document.getElementById('fTipoTicket').tagName === 'SELECT') {
+        document.getElementById('fTipoTicket').disabled = ro;
+    }
+    document.getElementById('fCajaPuerto').readOnly = ro;
 }
 function resetModal() {
     ['fTicketId','fFecha','fHorarioId','fTecnicoId',
