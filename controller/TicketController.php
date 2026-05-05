@@ -224,7 +224,7 @@ class TicketController
         $body = $this->jsonBody();
         $ticketId = (int) ($body['ticket_id'] ?? 0);
         $noLlamada = (int) ($body['no_llamada'] ?? 0);
-        if (!$ticketId || $noLlamada < 1 || $noLlamada > 3)
+        if (!$ticketId || $noLlamada < 1 || $noLlamada > 4)   // ← 4 ahora es válido
             $this->jsonError('Datos inválidos.', 422);
 
         $ticketModel = new TicketModel();
@@ -236,7 +236,8 @@ class TicketController
             $ticketId,
             $noLlamada,
             trim($body['respuesta_tecnico'] ?? ''),
-            trim($body['respuesta_cliente'] ?? '')
+            trim($body['respuesta_cliente'] ?? ''),
+            (int) ($body['es_calidad'] ?? 0)          // ← nuevo campo
         );
         $this->jsonSuccess(['saved' => true]);
     }

@@ -19,18 +19,19 @@ class TicketModel
     public function getByDate(string $fecha): array
     {
         $stmt = $this->db->prepare("
-            SELECT tt.ticket_id, tt.tecnico_id, tt.horario_id,
-                   tt.Cliente, tt.colonia, tt.Ticket, tt.Descripcion, tt.Telefono,
-                   tt.usuario_id, tt.estado, tt.tipo_ticket,
-                   u.nombre  AS agente_nombre,
-                   u.rol_id  AS agente_rol,
-                   COUNT(tl.llamada_id) AS total_llamadas
-            FROM tm_ticket tt
-            JOIN tm_usuarios u ON u.usu_id = tt.usuario_id
-            LEFT JOIN tm_llamadas tl ON tl.ticket_id = tt.ticket_id
-            WHERE tt.fecha = :fecha
-            GROUP BY tt.ticket_id
-        ");
+        SELECT tt.ticket_id, tt.tecnico_id, tt.horario_id,
+               tt.Cliente, tt.colonia, tt.Ticket, tt.Descripcion, tt.Telefono,
+               tt.usuario_id, tt.estado, tt.tipo_ticket,
+               u.nombre  AS agente_nombre,
+               u.rol_id  AS agente_rol,
+               COUNT(tl.llamada_id)                          AS total_llamadas,
+               MAX(tl.es_calidad)                            AS calidad_hecha
+        FROM tm_ticket tt
+        JOIN tm_usuarios u ON u.usu_id = tt.usuario_id
+        LEFT JOIN tm_llamadas tl ON tl.ticket_id = tt.ticket_id
+        WHERE tt.fecha = :fecha
+        GROUP BY tt.ticket_id
+    ");
         $stmt->execute([':fecha' => $fecha]);
         $rows = $stmt->fetchAll();
         $indexed = [];

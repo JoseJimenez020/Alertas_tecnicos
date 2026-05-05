@@ -272,26 +272,54 @@
         .campos-motivo-t.visible { display:block; }
         .campos-horas-t { display:none; }
         .campos-horas-t.visible { display:block; }
+        .calidad-check {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 18px;
+            color: rgba(40, 167, 69, 0.55);
+            pointer-events: none;
+            line-height: 1;
+            z-index: 2;
+        }
     </style>
 </head>
 <body>
+
 <?php
 function getIconHtml(array $ticket, array $colorMap): string {
-    $rolId   = (int) $ticket['agente_rol'];
-    $userId  = (int) $ticket['usuario_id'];
-    $color   = $colorMap[$userId] ?? 'bg-gray';
-    $tipo_ticket    = (int) ($ticket['tipo_ticket'] ?? 1);
+    $rolId      = (int) $ticket['agente_rol'];
+    $userId     = (int) $ticket['usuario_id'];
+    $colorClass = $colorMap[$userId] ?? 'bg-gray';
+    $tipo_ticket = (int) ($ticket['tipo_ticket'] ?? 1);
 
-    if ((int)$tipo_ticket === 2) {
-        // Asegúrate de que el 'fill' use la variable $color
+    if ($tipo_ticket === 2) {
+        // Mapa de clase CSS → valor hex para usar en SVG fill
+        $colorHex = [
+            'bg-green'      => '#92D050',
+            'bg-yellow'     => '#FFFF00',
+            'bg-pink'       => '#ff69b4',
+            'bg-peach'      => '#F1A983',
+            'bg-blue'       => '#00B0F0',
+            'bg-orange'     => '#FFC000',
+            'bg-gray'       => '#F2CEEF',
+            'bg-violet'     => '#D86DCD',
+            'bg-lightblue'  => '#DAE9F8',
+            'bg-m-blue'     => '#5bc0de',
+            'bg-bluemarco'  => '#94DCF8',
+            'bg-purple'     => '#D86DCD',
+        ];
+        $fill = $colorHex[$colorClass] ?? '#F2CEEF';
+
         return '
         <svg width="24" height="24" viewBox="0 0 24 24" style="display:block; margin:auto;">
-            <path d="M12 2L2 22h20L12 2z" fill="' . $color . '" stroke="white" stroke-width="1"/>
+            <path d="M12 2L2 22h20L12 2z" fill="' . $fill . '" stroke="white" stroke-width="1"/>
         </svg>';
     }
 
     $shape = ($rolId === 2) ? 'square' : 'circle';
-    return '<span class="' . $shape . ' ' . $color . '"></span>';
+    return '<span class="' . $shape . ' ' . $colorClass . '"></span>';
 }
 
 $zonaOrder = ['Centro','Chontalpa','Sierra','Carmen','Delicias','Allende','Merida'];
@@ -492,6 +520,9 @@ $fechaHoy     = date('Y-m-d');
                     onclick="handleCellClick(this)">
                     <?php if ($hasTicket): ?>
                     <div class="icon-wrap"><?= getIconHtml($ticket, $userColorMap) ?></div>
+                    <?php if (!empty($ticket['calidad_hecha'])): ?>
+                    <span class="calidad-check">✔</span>
+                    <?php endif; ?>
                     <?php endif; ?>
                 </td>
                 <?php endforeach; ?>
@@ -645,6 +676,17 @@ $fechaHoy     = date('Y-m-d');
                     <span class="llamada-status" id="lStatus<?= $n ?>"></span>
                 </fieldset>
                 <?php endfor; ?>
+                <!-- Llamada de Calidad -->
+                <fieldset class="llamada-bloque" id="llamadaBloque4" style="border-color:#1a7a4a;">
+                    <legend style="color:#1a7a4a;">⭐ Llamada de Calidad</legend>
+                    <div>
+                        <label>Respuesta del Cliente</label>
+                        <textarea id="lCliente4" maxlength="255" placeholder="Respuesta del cliente..."></textarea>
+                    </div>
+                    <button class="btn-save-llamada" style="background:#1a7a4a;"
+                            onclick="saveLlamada(4)">💾 Guardar Llamada de Calidad</button>
+                    <span class="llamada-status" id="lStatus4"></span>
+                </fieldset>
             </div>
         </div>
         <div class="modal-footer" id="modalFooter"></div>
@@ -835,50 +877,54 @@ async function openViewMode(ticketId) {
 
     if (soloLectura) {
         document.getElementById('llamadasSection').style.display = 'block';
-        for (let n = 1; n <= 3; n++) {
+        for (let n = 1; n <= 4; n++) {
             const ll = (t.llamadas && t.llamadas[n]) || {};
             const inputTecnico = document.getElementById(`lTecnico${n}`);
             const inputCliente = document.getElementById(`lCliente${n}`);
-            const bloque = document.getElementById(`llamadaBloque${n}`);
-            const status = document.getElementById(`lStatus${n}`);
+            const bloque  = document.getElementById(`llamadaBloque${n}`);
+            const status  = document.getElementById(`lStatus${n}`);
             const btnSave = bloque.querySelector('.btn-save-llamada');
 
-            inputTecnico.value = ll.respuesta_tecnico || '';
-            inputCliente.value = ll.respuesta_cliente || '';
-            inputTecnico.setAttribute('readonly', true);
-            inputCliente.setAttribute('readonly', true);
-            if (btnSave) btnSave.style.display = 'none';
-
-            if (ll.llamada_id) {
-                bloque.classList.add('llamada-guardada');
-                status.textContent = '✓ Guardada';
-                status.style.color = '#155724';
-            }
-        }
-    } else {
-        document.getElementById('llamadasSection').style.display = 'block';
-        for (let n = 1; n <= 3; n++) {
-            const ll = (t.llamadas && t.llamadas[n]) || {};
-            const inputTecnico = document.getElementById(`lTecnico${n}`);
-            const inputCliente = document.getElementById(`lCliente${n}`);
-            const bloque = document.getElementById(`llamadaBloque${n}`);
-            const status = document.getElementById(`lStatus${n}`);
-            const btnSave = bloque.querySelector('.btn-save-llamada');
-
-            inputTecnico.value = ll.respuesta_tecnico || '';
+            if (inputTecnico) inputTecnico.value = ll.respuesta_tecnico || '';
             inputCliente.value = ll.respuesta_cliente || '';
 
             if (ll.llamada_id) {
                 bloque.classList.add('llamada-guardada');
-                status.textContent = '✓ Guardada';
-                status.style.color = '#155724';
-                inputTecnico.setAttribute('readonly', true);
+                status.textContent = '✓ Guardada'; status.style.color = '#155724';
+                if (inputTecnico) { inputTecnico.setAttribute('readonly', true); }
                 inputCliente.setAttribute('readonly', true);
                 if (btnSave) btnSave.style.display = 'none';
             } else {
                 bloque.classList.remove('llamada-guardada');
                 status.textContent = '';
-                inputTecnico.removeAttribute('readonly');
+                if (inputTecnico) { inputTecnico.removeAttribute('readonly'); }
+                inputCliente.removeAttribute('readonly');
+                if (btnSave) btnSave.style.display = 'inline-block';
+            }
+        }
+    } else {
+        document.getElementById('llamadasSection').style.display = 'block';
+        for (let n = 1; n <= 4; n++) {
+            const ll = (t.llamadas && t.llamadas[n]) || {};
+            const inputTecnico = document.getElementById(`lTecnico${n}`);
+            const inputCliente = document.getElementById(`lCliente${n}`);
+            const bloque  = document.getElementById(`llamadaBloque${n}`);
+            const status  = document.getElementById(`lStatus${n}`);
+            const btnSave = bloque.querySelector('.btn-save-llamada');
+
+            if (inputTecnico) inputTecnico.value = ll.respuesta_tecnico || '';
+            inputCliente.value = ll.respuesta_cliente || '';
+
+            if (ll.llamada_id) {
+                bloque.classList.add('llamada-guardada');
+                status.textContent = '✓ Guardada'; status.style.color = '#155724';
+                if (inputTecnico) { inputTecnico.setAttribute('readonly', true); }
+                inputCliente.setAttribute('readonly', true);
+                if (btnSave) btnSave.style.display = 'none';
+            } else {
+                bloque.classList.remove('llamada-guardada');
+                status.textContent = '';
+                if (inputTecnico) { inputTecnico.removeAttribute('readonly'); }
                 inputCliente.removeAttribute('readonly');
                 if (btnSave) btnSave.style.display = 'inline-block';
             }
@@ -1125,10 +1171,14 @@ async function updateTicket() {
 async function saveLlamada(n) {
     const ticketId = parseInt(document.getElementById('fTicketId').value);
     if (!ticketId) return;
+
+    const tecnicoField = document.getElementById(`lTecnico${n}`);
     const payload = {
-        ticket_id: ticketId, no_llamada: n,
-        respuesta_tecnico: document.getElementById(`lTecnico${n}`).value.trim(),
-        respuesta_cliente: document.getElementById(`lCliente${n}`).value.trim(),
+        ticket_id         : ticketId,
+        no_llamada        : n,
+        respuesta_tecnico : tecnicoField ? tecnicoField.value.trim() : '',
+        respuesta_cliente : document.getElementById(`lCliente${n}`).value.trim(),
+        es_calidad        : (n === 4) ? 1 : 0,
     };
     const res  = await fetch(`${BASE_URL}?action=llamada.upsert`, {
         method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload),
@@ -1175,17 +1225,21 @@ function setFieldsReadonly(ro) {
     }
     document.getElementById('fCajaPuerto').readOnly = ro;
 }
+
 function resetModal() {
     ['fTicketId','fFecha','fHorarioId','fTecnicoId',
      'fCliente','fColonia','fTicketNum','fDescripcion','fTelefono'].forEach(id =>
         document.getElementById(id).value = ''
     );
-    for (let n = 1; n <= 3; n++) {
-        document.getElementById(`lTecnico${n}`).value = '';
+    for (let n = 1; n <= 4; n++) {
+        const tecnicoEl = document.getElementById(`lTecnico${n}`);
+        if (tecnicoEl) {
+            tecnicoEl.value = '';
+            tecnicoEl.removeAttribute('readonly');
+        }
         document.getElementById(`lCliente${n}`).value = '';
         document.getElementById(`lStatus${n}`).textContent = '';
         document.getElementById(`llamadaBloque${n}`).classList.remove('llamada-guardada');
-        document.getElementById(`lTecnico${n}`).removeAttribute('readonly');
         document.getElementById(`lCliente${n}`).removeAttribute('readonly');
         const btnSave = document.querySelector(`#llamadaBloque${n} .btn-save-llamada`);
         if (btnSave) btnSave.style.display = 'inline-block';
@@ -1194,6 +1248,7 @@ function resetModal() {
     const fb = document.getElementById('modalFeedback');
     fb.className = 'feedback'; fb.textContent = '';
 }
+
 function showFeedback(msg, type) {
     const el = document.getElementById('modalFeedback');
     el.textContent = msg; el.className = 'feedback ' + type;
