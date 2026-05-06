@@ -277,8 +277,8 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            font-size: 18px;
-            color: rgba(40, 167, 69, 0.55);
+            font-size: 22px;
+            color: rgb(3, 61, 17);
             pointer-events: none;
             line-height: 1;
             z-index: 2;
@@ -684,7 +684,7 @@ $fechaHoy     = date('Y-m-d');
                         <textarea id="lCliente4" maxlength="255" placeholder="Respuesta del cliente..."></textarea>
                     </div>
                     <button class="btn-save-llamada" style="background:#1a7a4a;"
-                            onclick="saveLlamada(4)">💾 Guardar Llamada de Calidad</button>
+                            onclick="saveLlamada(4)">Guardar Llamada de Calidad</button>
                     <span class="llamada-status" id="lStatus4"></span>
                 </fieldset>
             </div>
