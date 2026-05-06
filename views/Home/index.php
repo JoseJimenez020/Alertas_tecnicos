@@ -21,6 +21,35 @@
         }
         .btn-logout:hover { background: #a93226; }
 
+        /* ── Indicador en vivo ──────────────────────────────────── */
+        #liveIndicator {
+            display: inline-flex; align-items: center; gap: 5px;
+            font-size: 10px; color: #555; user-select: none;
+            padding: 3px 8px; border: 1px solid #ddd;
+            background: #f8f9fa; border-radius: 10px;
+            transition: border-color .3s, color .3s;
+        }
+        #liveIndicator.error { color: #c0392b; border-color: #f5c6cb; background: #fdf0f0; }
+        #liveIndicator .live-dot {
+            width: 7px; height: 7px; border-radius: 50%;
+            background: #28a745; flex-shrink: 0;
+            animation: livePulse 2s ease-in-out infinite;
+        }
+        #liveIndicator.error .live-dot { background: #c0392b; animation: none; }
+        #liveIndicator.syncing .live-dot { background: #ffc107; animation: none; }
+        @keyframes livePulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50%       { opacity: .4; transform: scale(.75); }
+        }
+
+        /* ── Flash de celda actualizada ─────────────────────────── */
+        @keyframes cellFlash {
+            0%   { outline: 2px solid #1a4d6d; outline-offset: -2px; }
+            60%  { outline: 2px solid #1a4d6d; outline-offset: -2px; }
+            100% { outline: 2px solid transparent; outline-offset: -2px; }
+        }
+        .cell-updated { animation: cellFlash .9s ease-out forwards; }
+
         /* ── Menú desplegable ───────────────────────────────────── */
         .dropdown { position: relative; display: inline-block; }
         .dropdown-toggle {
@@ -366,6 +395,9 @@ $fechaHoy     = date('Y-m-d');
     <div class="topbar">
         <h1>Incidentes de Clientes Residenciales</h1>
         <div class="topbar-right">
+            <!-- <div id="liveIndicator" title="Actualización en vivo de tabla">
+                <div class="live-dot"></div> En vivo
+            </div> -->
             <span>👤 <?= htmlspecialchars($usuario['nombre']) ?>
                 (<?= $rolesNombres[$rolId] ?? 'Rol '.$rolId ?>)
             </span>
@@ -446,7 +478,6 @@ $fechaHoy     = date('Y-m-d');
                     $bloqueadoTotal = !empty($bloqueosCelda[$tecId_h]['_todo']);
 
                     // Tiene AL MENOS algún bloqueo parcial (mecánico con horas específicas)
-                    // Se detecta si hay alguna clave numérica en bloqueosCelda para este técnico
                     $bloqueadoParcial = false;
                     if (!$bloqueadoTotal && isset($bloqueosCelda[$tecId_h])) {
                         foreach ($bloqueosCelda[$tecId_h] as $k => $v) {
@@ -532,10 +563,6 @@ $fechaHoy     = date('Y-m-d');
     </table>
 
     <!-- ── LISTA INFERIOR ────────────────────────────────────────── -->
-    <!--
-        La lista usa $bloquesDiaHoy / $bloqueosCeldaHoy (fecha real del servidor),
-        independiente de la fecha consultada en el tablero.
-    -->
     <div class="staff-lists">
         <?php
         $groups = [
@@ -552,7 +579,6 @@ $fechaHoy     = date('Y-m-d');
             <?php foreach ($allTecsByZona[$z] as $t):
                 $tecId = (int)$t['TecnicoId'];
 
-                // ── SIEMPRE usa bloqueos de HOY para la lista ──────────
                 $bActivo = $bloquesDiaHoy[$tecId][0] ?? null;
                 $disp    = empty($bloquesDiaHoy[$tecId]);
                 $mot     = $bActivo['motivo'] ?? '';
@@ -643,7 +669,6 @@ $fechaHoy     = date('Y-m-d');
                 <input type="hidden" id="fTipoTicket" value="1">
             <?php endif; ?>
 
-            <!-- Este contenedor iniciará oculto y solo se muestra si es tipo 2 -->
             <div id="wrapCajaPuerto" style="display:none;">
                 <label>Caja y puerto liberado</label>
                 <input type="text" id="fCajaPuerto" maxlength="255" placeholder="Ej. Caja 3, Puerto 12">
@@ -971,7 +996,7 @@ async function deleteTicket(ticketId) {
     const json = await res.json();
     if (json.success) {
         showFeedback('Ticket eliminado correctamente.', 'success');
-        setTimeout(() => location.reload(), 900);
+        setTimeout(() => { closeModal('modalOverlay'); syncTablero(); }, 900);
     } else {
         showFeedback(json.message || 'Error al eliminar el ticket.', 'error');
     }
@@ -1106,8 +1131,9 @@ async function confirmarReagendado() {
         closeModal('modalReagendar');
         const btnR = document.querySelector('#modalFooter .btn-reschedule');
         if (btnR) btnR.style.display = 'none';
-        document.getElementById('modalOverlay').addEventListener('click', () => location.reload(), { once: true });
+        
         mostrarFeedbackReagendar('✓ Reagendado correctamente.', 'success');
+        document.getElementById('modalOverlay').addEventListener('click', () => syncTablero(), { once: true });
     } else {
         mostrarPasoReagendar(1);
         mostrarFeedbackReagendar(json.message || 'Error al reagendar.', 'error');
@@ -1133,7 +1159,7 @@ async function reagendarAutomatico() {
         closeModal('modalReagendar');
         const btnR = document.querySelector('#modalFooter .btn-reschedule');
         if (btnR) btnR.style.display = 'none';
-        document.getElementById('modalOverlay').addEventListener('click', () => location.reload(), { once: true });
+        document.getElementById('modalOverlay').addEventListener('click', () => syncTablero(), { once: true });
     } else {
         mostrarFeedbackReagendar(json.message || 'No se encontró slot disponible.', 'error');
     }
@@ -1152,7 +1178,10 @@ async function saveTicket() {
         method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload),
     });
     const json = await res.json();
-    if (json.success) { showFeedback('Ticket registrado.', 'success'); setTimeout(()=>location.reload(),900); }
+    if (json.success) { 
+        showFeedback('Ticket registrado.', 'success'); 
+        setTimeout(() => { closeModal('modalOverlay'); syncTablero(); }, 900); 
+    }
     else showFeedback(json.message || 'Error al guardar.', 'error');
 }
 
@@ -1164,7 +1193,10 @@ async function updateTicket() {
         method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload),
     });
     const json = await res.json();
-    if (json.success) { showFeedback('Ticket actualizado.', 'success'); setTimeout(()=>location.reload(),900); }
+    if (json.success) { 
+        showFeedback('Ticket actualizado.', 'success'); 
+        setTimeout(() => { closeModal('modalOverlay'); syncTablero(); }, 900); 
+    }
     else showFeedback(json.message || 'Error al actualizar.', 'error');
 }
 
@@ -1188,6 +1220,7 @@ async function saveLlamada(n) {
     if (json.success) {
         document.getElementById(`llamadaBloque${n}`).classList.add('llamada-guardada');
         st.textContent = '✓ Guardada'; st.style.color = '#155724';
+        syncTablero(); // Sincronizamos silenciosamente para reflejar la marca de calidad en la tabla principal
     } else { st.textContent = '✗ Error'; st.style.color = '#721c24'; }
 }
 
@@ -1322,8 +1355,8 @@ async function saveTecnicoStatus() {
             });
             const json = await res.json();
             if (json.success) {
-                fb.textContent = '✓ Disponibilidad restaurada. Recargando...'; fb.className = 'feedback success';
-                setTimeout(() => location.reload(), 800);
+                fb.textContent = '✓ Disponibilidad restaurada. Actualizando...'; fb.className = 'feedback success';
+                setTimeout(() => { closeModal('modalTecnico'); syncTablero(); }, 800);
             } else {
                 fb.textContent = json.message || 'Error'; fb.className = 'feedback error';
             }
@@ -1372,8 +1405,8 @@ async function saveTecnicoStatus() {
     });
     const json = await res.json();
     if (json.success) {
-        fb.textContent = '✓ Guardado. Recargando...'; fb.className = 'feedback success';
-        setTimeout(() => location.reload(), 800);
+        fb.textContent = '✓ Guardado. Actualizando...'; fb.className = 'feedback success';
+        setTimeout(() => { closeModal('modalTecnico'); syncTablero(); }, 800);
     } else {
         fb.textContent = json.message || 'Error'; fb.className = 'feedback error';
     }
@@ -1458,7 +1491,8 @@ async function toggleEstado(ticketId, nuevoEstado) {
     });
     const json = await res.json();
     if (json.success) {
-        location.reload();
+        closeModal('modalOverlay');
+        syncTablero();
     } else {
         showFeedback(json.message || 'Error al cambiar el estado.', 'error');
     }
@@ -1521,6 +1555,82 @@ document.addEventListener('click', e => {
         if (parpadeos >= 21) { clearInterval(intervalo); celda.classList.remove('cell-highlight-strong'); }
     }, 500);
 })();
+
+/* ══════════════════════════════════════════════════════════
+   LIVE UPDATES (SIN RECARGAR PÁGINA Y SIN TOAST)
+══════════════════════════════════════════════════════════ */
+async function syncTablero() {
+    const indicator = document.getElementById('liveIndicator');
+    if (!indicator) return;
+    
+    try {
+        indicator.classList.add('syncing');
+        const url = new URL(window.location.href);
+        url.searchParams.set('_t', Date.now()); // Previene caché
+        
+        const res = await fetch(url.toString(), { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+        if (!res.ok) throw new Error('Network response was not ok');
+        const html = await res.text();
+        
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        
+        // --- 1. Sincronizar el cuerpo de la tabla (Tickets) ---
+        const oldTbody = document.querySelector('table tbody');
+        const newTbody = doc.querySelector('table tbody');
+        if (oldTbody && newTbody) {
+            const oldCells = oldTbody.querySelectorAll('td.cell-ticket');
+            const newCells = newTbody.querySelectorAll('td.cell-ticket');
+            
+            newCells.forEach((newCell, index) => {
+                const oldCell = oldCells[index];
+                if (!oldCell) return;
+                
+                if (newCell.innerHTML !== oldCell.innerHTML || newCell.className !== oldCell.className) {
+                    oldCell.innerHTML = newCell.innerHTML;
+                    oldCell.className = newCell.className;
+                    
+                    if (newCell.hasAttribute('data-ticket-id')) {
+                        oldCell.setAttribute('data-ticket-id', newCell.getAttribute('data-ticket-id'));
+                    } else {
+                        oldCell.removeAttribute('data-ticket-id');
+                    }
+                    oldCell.setAttribute('data-can-create', newCell.getAttribute('data-can-create'));
+                    
+                    oldCell.classList.remove('cell-updated');
+                    void oldCell.offsetWidth; 
+                    oldCell.classList.add('cell-updated');
+                }
+            });
+        }
+
+        // --- 2. Sincronizar el encabezado de la tabla (Estados/Motivos técnicos) ---
+        const oldThead = document.querySelector('table thead');
+        const newThead = doc.querySelector('table thead');
+        if (oldThead && newThead && oldThead.innerHTML !== newThead.innerHTML) {
+            oldThead.innerHTML = newThead.innerHTML;
+        }
+
+        // --- 3. Sincronizar las listas inferiores ---
+        const oldLists = document.querySelector('.staff-lists');
+        const newLists = doc.querySelector('.staff-lists');
+        if (oldLists && newLists && oldLists.innerHTML !== newLists.innerHTML) {
+            oldLists.innerHTML = newLists.innerHTML;
+            if (ROL_ID === 2) {
+                document.querySelectorAll('.btn-tecnico-status').forEach(b => b.style.display = 'inline-block');
+            }
+        }
+        
+        indicator.classList.remove('syncing', 'error');
+    } catch (e) {
+        console.error('Error en syncTablero:', e);
+        indicator.classList.remove('syncing');
+        indicator.classList.add('error');
+    }
+}
+
+// Iniciar sondeo silencioso de actualización cada 15 segundos
+setInterval(syncTablero, 15000);
 
 inicializarNotificaciones();
 </script>
