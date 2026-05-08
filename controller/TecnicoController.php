@@ -158,8 +158,9 @@ class TecnicoController
         $model = new TecnicoModel();
         if (!$model->findById($id))
             $this->jsonError('Técnico no encontrado.', 404);
-        if (!$model->delete($id))
-            $this->jsonError('No se puede eliminar: el técnico tiene tickets asociados.', 409);
+
+        // Soft delete: marcar como inactivo en lugar de eliminar
+        $model->setStatus($id, 'Eliminado');
         $this->jsonSuccess(['deleted' => true]);
     }
 

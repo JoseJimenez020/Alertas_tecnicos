@@ -1,31 +1,32 @@
 <?php
-class TableroController {
+class TableroController
+{
 
-    public function index(): void {
-        $fecha    = $_GET['fecha'] ?? date('Y-m-d');
+    public function index(): void
+    {
+        $fecha = $_GET['fecha'] ?? date('Y-m-d');
         $fechaHoy = date('Y-m-d');
 
         $horarioModel = new HorarioModel();
         $tecnicoModel = new TecnicoModel();
-        $ticketModel  = new TicketModel();
+        $ticketModel = new TicketModel();
         $usuarioModel = new UsuarioModel();
-        $bloqueModel  = new BloqueModel();
-
-        $horarios      = $horarioModel->getAll();
-        $tecnicosAll   = $tecnicoModel->getAll();
+        $bloqueModel = new BloqueModel();
+        $horarios = $horarioModel->getAll();
+        $tecnicosAll = $tecnicoModel->getAllActive(); // ← Solo activos
         $tecnicosGroup = $tecnicoModel->getGroupedByZona();
-        $tickets       = $ticketModel->getByDate($fecha);
-        $usuario       = $_SESSION['usuario'];
+        $tickets = $ticketModel->getByDate($fecha);
+        $usuario = $_SESSION['usuario'];
 
         $todosUsuarios = $usuarioModel->getAll();
-        $userColorMap  = [];
+        $userColorMap = [];
         foreach ($todosUsuarios as $u) {
             $userColorMap[(int) $u['usu_id']] = $u['color'];
         }
 
         $tecIds = array_column($tecnicosAll, 'TecnicoId');
 
-        $bloquesDia    = $bloqueModel->getActivosEnRango($tecIds, $fecha, $fecha);
+        $bloquesDia = $bloqueModel->getActivosEnRango($tecIds, $fecha, $fecha);
         $bloqueosCelda = [];
         foreach ($bloquesDia as $tecId => $lista) {
             foreach ($lista as $b) {
@@ -33,13 +34,13 @@ class TableroController {
                     $bloqueosCelda[$tecId]['_todo'] = true;
                 } else {
                     foreach ($b['horas_ids'] as $hid) {
-                        $bloqueosCelda[$tecId][(int)$hid] = true;
+                        $bloqueosCelda[$tecId][(int) $hid] = true;
                     }
                 }
             }
         }
 
-        $bloquesDiaHoy    = $bloqueModel->getActivosEnRango($tecIds, $fechaHoy, $fechaHoy);
+        $bloquesDiaHoy = $bloqueModel->getActivosEnRango($tecIds, $fechaHoy, $fechaHoy);
         $bloqueosCeldaHoy = [];
         foreach ($bloquesDiaHoy as $tecId => $lista) {
             foreach ($lista as $b) {
@@ -47,7 +48,7 @@ class TableroController {
                     $bloqueosCeldaHoy[$tecId]['_todo'] = true;
                 } else {
                     foreach ($b['horas_ids'] as $hid) {
-                        $bloqueosCeldaHoy[$tecId][(int)$hid] = true;
+                        $bloqueosCeldaHoy[$tecId][(int) $hid] = true;
                     }
                 }
             }
@@ -62,7 +63,8 @@ class TableroController {
     // Devuelve el estado actual de todos los tickets de una fecha.
     // El cliente compara el hash con el anterior; solo procesa si cambió.
     // ══════════════════════════════════════════════════════════════════
-    public function estado(): void {
+    public function estado(): void
+    {
         header('Content-Type: application/json; charset=utf-8');
         header('Cache-Control: no-store, no-cache, must-revalidate');
 
@@ -110,15 +112,15 @@ class TableroController {
         foreach ($rows as $r) {
             $key = $r['tecnico_id'] . '_' . $r['horario_id'];
             $tickets[$key] = [
-                'ticket_id'      => (int) $r['ticket_id'],
-                'tecnico_id'     => (int) $r['tecnico_id'],
-                'horario_id'     => (int) $r['horario_id'],
-                'usuario_id'     => (int) $r['usuario_id'],
-                'agente_rol'     => (int) $r['agente_rol'],
-                'agente_color'   => $r['agente_color'],
-                'agente_nombre'  => $r['agente_nombre'],
-                'estado'         => $r['estado'],
-                'tipo_ticket'    => (int) ($r['tipo_ticket'] ?? 1),
+                'ticket_id' => (int) $r['ticket_id'],
+                'tecnico_id' => (int) $r['tecnico_id'],
+                'horario_id' => (int) $r['horario_id'],
+                'usuario_id' => (int) $r['usuario_id'],
+                'agente_rol' => (int) $r['agente_rol'],
+                'agente_color' => $r['agente_color'],
+                'agente_nombre' => $r['agente_nombre'],
+                'estado' => $r['estado'],
+                'tipo_ticket' => (int) ($r['tipo_ticket'] ?? 1),
                 'total_llamadas' => (int) $r['total_llamadas'],
             ];
         }
@@ -137,8 +139,8 @@ class TableroController {
         echo json_encode([
             'success' => true,
             'changed' => true,
-            'hash'    => $hash,
-            'fecha'   => $fecha,
+            'hash' => $hash,
+            'fecha' => $fecha,
             'tickets' => $tickets,
         ]);
         exit;

@@ -388,7 +388,7 @@ async function guardarTecnico() {
 }
 
 async function confirmDelete(id, nombre) {
-    if (!confirm(`¿Eliminar al técnico "${nombre}"?\nSolo es posible si no tiene tickets registrados.`)) return;
+    if (!confirm(`¿Eliminar al técnico "${nombre}"?`)) return;
     const res  = await fetch(`${BASE_URL}?action=tecnico.delete`, {
         method:'POST', headers:{'Content-Type':'application/json'},
         body:JSON.stringify({ tecnico_id: id }),
