@@ -814,6 +814,7 @@ $fechaHoy     = date('Y-m-d');
 
 <script>
 const ROL_ID             = <?= (int) $rolId ?>;
+const USUARIO_ID         = <?= (int) $usuario['id'] ?>;
 const BASE_URL           = '<?= BASE_URL ?>';
 const FECHA_HOY_SERVIDOR = '<?= $fechaHoy ?>';
 const FECHA_TABLERO      = '<?= htmlspecialchars($fecha) ?>';
@@ -1256,7 +1257,8 @@ function setFieldsReadonly(ro) {
     if(document.getElementById('fTipoTicket') && document.getElementById('fTipoTicket').tagName === 'SELECT') {
         document.getElementById('fTipoTicket').disabled = ro;
     }
-    document.getElementById('fCajaPuerto').readOnly = ro;
+    // El usuario 2 siempre puede editar caja/puerto (se llena después con datos del técnico)
+    document.getElementById('fCajaPuerto').readOnly = (ro && USUARIO_ID !== 2);
 }
 
 function resetModal() {
