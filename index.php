@@ -29,7 +29,7 @@ require_once BASE_PATH . '/controller/NotifController.php';
 require_once BASE_PATH . '/controller/BloqueController.php';
 
 $action = $_GET['action'] ?? 'tablero';
-$ip     = Security::clientIp();
+$ip = Security::clientIp();
 
 if ($action === 'login') {
     (new AuthController())->login();
@@ -51,6 +51,10 @@ if (!Security::validateSession($ip)) {
 switch ($action) {
     case 'tablero':
         (new TableroController())->index();
+        break;
+
+    case 'ticket.updateCajaPuerto':
+        (new TicketController())->updateCajaPuerto();
         break;
 
     // ── Polling en vivo ───────────────────────────────────────────

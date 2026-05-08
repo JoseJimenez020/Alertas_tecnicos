@@ -214,6 +214,37 @@ class TicketController
         ]);
     }
 
+    public function updateCajaPuerto(): void
+    {
+        $this->requireJson();
+        $usuario = $_SESSION['usuario'];
+
+        // Solo el usuario con ID=2 puede usar este endpoint
+        if ((int) $usuario['id'] !== 2) {
+            $this->jsonError('Sin permisos.', 403);
+        }
+
+        $body = $this->jsonBody();
+        $id = (int) ($body['ticket_id'] ?? 0);
+        $cajaPuerto = trim($body['caja_puerto'] ?? '');
+
+        if (!$id)
+            $this->jsonError('ID de ticket inválido.', 422);
+
+        $model = new TicketModel();
+        $ticket = $model->findById($id);
+        if (!$ticket)
+            $this->jsonError('Ticket no encontrado.', 404);
+        if ((int) $ticket['tipo_ticket'] !== 2)
+            $this->jsonError('El ticket no es de tipo Retiro de equipo.', 422);
+
+        $db = Database::getInstance()->getConnection();
+        $stmt = $db->prepare("UPDATE tm_ticket SET caja_puerto = :cp WHERE ticket_id = :id");
+        $stmt->execute([':cp' => $cajaPuerto, ':id' => $id]);
+
+        $this->jsonSuccess(['updated' => true]);
+    }
+
     public function upsertLlamada(): void
     {
         $this->requireJson();
