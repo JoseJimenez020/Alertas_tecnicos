@@ -1861,14 +1861,14 @@
         }
 
         async function guardarCajaPuerto() {
-            const ticketId   = parseInt(document.getElementById('fTicketId').value);
+            const ticketId = parseInt(document.getElementById('fTicketId').value);
             if (!ticketId) return;
             const cajaPuerto = document.getElementById('fCajaPuerto').value.trim();
 
-            const res  = await fetch(`${BASE_URL}?action=ticket.updateCajaPuerto`, {
-                method : 'POST',
+            const res = await fetch(`${BASE_URL}?action=ticket.updateCajaPuerto`, {
+                method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body   : JSON.stringify({ ticket_id: ticketId, caja_puerto: cajaPuerto }),
+                body: JSON.stringify({ ticket_id: ticketId, caja_puerto: cajaPuerto }),
             });
             const json = await res.json();
             showFeedback(
@@ -2154,78 +2154,201 @@
         /* ══════════════════════════════════════════════════════════
            LIVE UPDATES (SIN RECARGAR PÁGINA Y SIN TOAST)
         ══════════════════════════════════════════════════════════ */
-        async function syncTablero() {
-            const indicator = document.getElementById('liveIndicator');
-            if (!indicator) return;
-
+        /*async function syncTablero() {
             try {
-                indicator.classList.add('syncing');
-                const url = new URL(window.location.href);
-                url.searchParams.set('_t', Date.now()); // Previene caché
+                const res = await fetch(
+                    `${BASE_URL}?action=tablero.estado&fecha=${FECHA_TABLERO}&_t=${Date.now()}`,
+                    { cache: 'no-store' }
+                );
+                if (!res.ok) throw new Error('Network error');
+                const json = await res.json();
+                if (!json.success || !json.changed) return;
 
-                const res = await fetch(url.toString(), { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
-                if (!res.ok) throw new Error('Network response was not ok');
-                const html = await res.text();
+                json.tickets && Object.entries(json.tickets).forEach(([key, t]) => {
+                    const [tecId, horId] = key.split('_');
+                    const cell = document.querySelector(
+                        `td[data-tecnico-id="${tecId}"][data-horario-id="${horId}"]`
+                    );
+                    if (!cell || cell.classList.contains('cell-nodisponible')) return;
 
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(html, 'text/html');
-
-                // --- 1. Sincronizar el cuerpo de la tabla (Tickets) ---
-                const oldTbody = document.querySelector('table tbody');
-                const newTbody = doc.querySelector('table tbody');
-                if (oldTbody && newTbody) {
-                    const oldCells = oldTbody.querySelectorAll('td.cell-ticket');
-                    const newCells = newTbody.querySelectorAll('td.cell-ticket');
-
-                    newCells.forEach((newCell, index) => {
-                        const oldCell = oldCells[index];
-                        if (!oldCell) return;
-
-                        if (newCell.innerHTML !== oldCell.innerHTML || newCell.className !== oldCell.className) {
-                            oldCell.innerHTML = newCell.innerHTML;
-                            oldCell.className = newCell.className;
-
-                            if (newCell.hasAttribute('data-ticket-id')) {
-                                oldCell.setAttribute('data-ticket-id', newCell.getAttribute('data-ticket-id'));
-                            } else {
-                                oldCell.removeAttribute('data-ticket-id');
-                            }
-                            oldCell.setAttribute('data-can-create', newCell.getAttribute('data-can-create'));
-
-                            oldCell.classList.remove('cell-updated');
-                            void oldCell.offsetWidth;
-                            oldCell.classList.add('cell-updated');
-                        }
-                    });
-                }
-
-                // --- 2. Sincronizar el encabezado de la tabla (Estados/Motivos técnicos) ---
-                const oldThead = document.querySelector('table thead');
-                const newThead = doc.querySelector('table thead');
-                if (oldThead && newThead && oldThead.innerHTML !== newThead.innerHTML) {
-                    oldThead.innerHTML = newThead.innerHTML;
-                }
-
-                // --- 3. Sincronizar las listas inferiores ---
-                const oldLists = document.querySelector('.staff-lists');
-                const newLists = doc.querySelector('.staff-lists');
-                if (oldLists && newLists && oldLists.innerHTML !== newLists.innerHTML) {
-                    oldLists.innerHTML = newLists.innerHTML;
-                    if (ROL_ID === 2) {
-                        document.querySelectorAll('.btn-tecnico-status').forEach(b => b.style.display = 'inline-block');
+                    // Construir clase CSS según estado
+                    let newClass = 'cell-ticket occupied';
+                    if (t.estado === 'terminado') {
+                        newClass += ' estado-terminado';
+                    } else if (t.total_llamadas >= 3) {
+                        newClass += ' estado-rojo';
+                    } else if (t.total_llamadas === 2) {
+                        newClass += ' estado-segunda-llamada';
+                    } else if (t.total_llamadas === 1) {
+                        newClass += ' estado-primera-llamada';
                     }
-                }
 
-                indicator.classList.remove('syncing', 'error');
+                    // Construir ícono según rol y color del agente
+                    const colorClass = t.agente_color || 'bg-gray';
+                    let iconHtml;
+                    if (t.tipo_ticket === 2) {
+                        const colorHex = {
+                            'bg-green': '#92D050', 'bg-yellow': '#FFFF00', 'bg-pink': '#ff69b4',
+                            'bg-peach': '#F1A983', 'bg-blue': '#00B0F0', 'bg-orange': '#FFC000',
+                            'bg-gray': '#F2CEEF', 'bg-violet': '#D86DCD', 'bg-lightblue': '#DAE9F8',
+                            'bg-m-blue': '#5bc0de', 'bg-bluemarco': '#94DCF8', 'bg-purple': '#D86DCD',
+                        };
+                        const fill = colorHex[colorClass] || '#F2CEEF';
+                        iconHtml = `<svg width="24" height="24" viewBox="0 0 24 24" style="display:block;margin:auto;">
+                    <path d="M12 2L2 22h20L12 2z" fill="${fill}" stroke="white" stroke-width="1"/>
+                </svg>`;
+                    } else {
+                        const shape = t.agente_rol === 2 ? 'square' : 'circle';
+                        iconHtml = `<span class="${shape} ${colorClass}"></span>`;
+                    }
+
+                    const calidadHtml = t.calidad_hecha ? '<span class="calidad-check">✔</span>' : '';
+                    const newInner = `<div class="icon-wrap">${iconHtml}</div>${calidadHtml}`;
+
+                    // Solo actualizar si algo cambió
+                    if (cell.className !== newClass || cell.innerHTML !== newInner) {
+                        cell.className = newClass;
+                        cell.innerHTML = newInner;
+                        cell.setAttribute('data-ticket-id', t.ticket_id);
+                        cell.setAttribute('data-can-create', '0');
+                        cell.classList.remove('cell-updated');
+                        void cell.offsetWidth;
+                        cell.classList.add('cell-updated');
+                    }
+                });
+
+                // Celdas que tenían ticket y ahora están vacías (ticket eliminado)
+                document.querySelectorAll('td.cell-ticket.occupied').forEach(cell => {
+                    const tecId = cell.dataset.tecnicoId;
+                    const horId = cell.dataset.horarioId;
+                    const key = `${tecId}_${horId}`;
+                    if (!json.tickets[key]) {
+                        cell.className = 'cell-ticket';
+                        cell.innerHTML = '';
+                        cell.removeAttribute('data-ticket-id');
+                        cell.setAttribute('data-can-create', '<?= $canCreate ? '1' : '0' ?>');
+                    }
+                });
+
+            } catch (e) {
+            console.error('Error en syncTablero:', e);
+        }
+        }*/
+        // ── syncTablero se mantiene para actualizaciones inmediatas locales ──
+        async function syncTablero() {
+            try {
+                const res = await fetch(
+                    `${BASE_URL}?action=tablero.estado&fecha=${FECHA_TABLERO}&_t=${Date.now()}`,
+                    { cache: 'no-store' }
+                );
+                const json = await res.json();
+                if (json.success && json.changed) aplicarCambios(json.tickets);
             } catch (e) {
                 console.error('Error en syncTablero:', e);
-                indicator.classList.remove('syncing');
-                indicator.classList.add('error');
             }
         }
 
+        // ── Lógica de actualización de celdas ───────────────────────────
+        function aplicarCambios(tickets) {
+            Object.entries(tickets).forEach(([key, t]) => {
+                const [tecId, horId] = key.split('_');
+                const cell = document.querySelector(
+                    `td[data-tecnico-id="${tecId}"][data-horario-id="${horId}"]`
+                );
+                if (!cell || cell.classList.contains('cell-nodisponible')) return;
+
+                let newClass = 'cell-ticket occupied';
+                if (t.estado === 'terminado') newClass += ' estado-terminado';
+                else if (t.total_llamadas >= 3) newClass += ' estado-rojo';
+                else if (t.total_llamadas === 2) newClass += ' estado-segunda-llamada';
+                else if (t.total_llamadas === 1) newClass += ' estado-primera-llamada';
+
+                const colorClass = t.agente_color || 'bg-gray';
+                let iconHtml;
+                if (t.tipo_ticket === 2) {
+                    const colorHex = {
+                        'bg-green': '#92D050', 'bg-yellow': '#FFFF00', 'bg-pink': '#ff69b4',
+                        'bg-peach': '#F1A983', 'bg-blue': '#00B0F0', 'bg-orange': '#FFC000',
+                        'bg-gray': '#F2CEEF', 'bg-violet': '#D86DCD', 'bg-lightblue': '#DAE9F8',
+                        'bg-m-blue': '#5bc0de', 'bg-bluemarco': '#94DCF8', 'bg-purple': '#D86DCD',
+                    };
+                    const fill = colorHex[colorClass] || '#F2CEEF';
+                    iconHtml = `<svg width="24" height="24" viewBox="0 0 24 24" style="display:block;margin:auto;">
+                <path d="M12 2L2 22h20L12 2z" fill="${fill}" stroke="white" stroke-width="1"/>
+            </svg>`;
+                } else {
+                    const shape = t.agente_rol === 2 ? 'square' : 'circle';
+                    iconHtml = `<span class="${shape} ${colorClass}"></span>`;
+                }
+
+                const calidadHtml = parseInt(t.calidad_hecha) === 1 ? '<span class="calidad-check">✔</span>' : '';
+                const newInner = `<div class="icon-wrap">${iconHtml}</div>${calidadHtml}`;
+
+                if (cell.className !== newClass || cell.innerHTML !== newInner) {
+                    cell.className = newClass;
+                    cell.innerHTML = newInner;
+                    cell.setAttribute('data-ticket-id', t.ticket_id);
+                    cell.setAttribute('data-can-create', '0');
+                    cell.classList.remove('cell-updated');
+                    void cell.offsetWidth;
+                    cell.classList.add('cell-updated');
+                }
+            });
+
+            // Limpiar celdas de tickets eliminados
+            document.querySelectorAll('td.cell-ticket.occupied').forEach(cell => {
+                const key = `${cell.dataset.tecnicoId}_${cell.dataset.horarioId}`;
+                if (!tickets[key]) {
+                    cell.className = 'cell-ticket';
+                    cell.innerHTML = '';
+                    cell.removeAttribute('data-ticket-id');
+                    cell.setAttribute('data-can-create', '<?= $canCreate ? '1' : '0' ?>');
+                }
+            });
+        }
+
+        // ── WebSocket ────────────────────────────────────────────────────
+        function iniciarWebSocket() {
+            const url = `wss://${location.host.split(':')[0]}:3001`;
+            let ws, reconnectTimer;
+
+            function connect() {
+                ws = new WebSocket(url);
+
+                ws.onopen = () => {
+                    console.log('WebSocket conectado');
+                    clearTimeout(reconnectTimer);
+                };
+
+                ws.onmessage = (e) => {
+                    const msg = JSON.parse(e.data);
+
+                    if (msg.event === 'ticket.changed') {
+                        if (!msg.payload.fecha || msg.payload.fecha === FECHA_TABLERO) {
+                            syncTablero();
+                        }
+                    }
+
+                    if (msg.event === 'tecnico.changed') {
+                        location.reload();
+                    }
+                };
+
+                ws.onclose = () => {
+                    console.warn('WebSocket desconectado, reintentando en 5s...');
+                    reconnectTimer = setTimeout(connect, 5000);
+                };
+
+                ws.onerror = () => ws.close();
+            }
+
+            connect();
+        }
+
+        iniciarWebSocket();
+        inicializarNotificaciones();
         // Iniciar sondeo silencioso de actualización cada 15 segundos
-        setInterval(syncTablero, 15000);
+        // setInterval(syncTablero, 7000);
 
         inicializarNotificaciones();
     </script>

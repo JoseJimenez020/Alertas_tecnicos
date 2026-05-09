@@ -46,6 +46,7 @@ class TicketController
             'tipo_ticket' => $tipo_ticket,
             'caja_puerto' => $caja_puerto,
         ]);
+        WsNotifier::send('ticket.changed', ['fecha' => $body['fecha']]);
         $this->jsonSuccess(['ticket_id' => $id, 'rol_id' => $usuario['rol_id']]);
     }
 
@@ -104,6 +105,7 @@ class TicketController
             'tipo_ticket' => $tipo_ticket,
             'caja_puerto' => $caja_puerto,
         ]);
+        WsNotifier::send('ticket.changed', ['fecha' => $ticket['fecha']]);
         $this->jsonSuccess(['updated' => true]);
     }
 
@@ -113,28 +115,30 @@ class TicketController
      * Marca el ticket como 'terminado' o revierte a null.
      */
     public function setEstado(): void
-    {
-        $this->requireJson();
-        $usuario = $_SESSION['usuario'];
-        if ($usuario['rol_id'] == 5)
-            $this->jsonError('Sin permisos.', 403);
+{
+    $this->requireJson();
+    $usuario = $_SESSION['usuario'];
+    if ($usuario['rol_id'] == 5)
+        $this->jsonError('Sin permisos.', 403);
 
-        $body = $this->jsonBody();
-        $id = (int) ($body['ticket_id'] ?? 0);
-        $estado = $body['estado'] ?? null; // 'terminado' | null
+    $body = $this->jsonBody();
+    $id = (int) ($body['ticket_id'] ?? 0);
+    $estado = $body['estado'] ?? null;
 
-        if (!$id)
-            $this->jsonError('ID de ticket inválido.', 422);
-        if ($estado !== null && $estado !== 'terminado')
-            $this->jsonError('Estado inválido.', 422);
+    if (!$id)
+        $this->jsonError('ID de ticket inválido.', 422);
+    if ($estado !== null && $estado !== 'terminado')
+        $this->jsonError('Estado inválido.', 422);
 
-        $model = new TicketModel();
-        if (!$model->findById($id))
-            $this->jsonError('Ticket no encontrado.', 404);
+    $model  = new TicketModel();
+    $ticket = $model->findById($id); // <- guardar el resultado
+    if (!$ticket)
+        $this->jsonError('Ticket no encontrado.', 404);
 
-        $model->setEstado($id, $estado);
-        $this->jsonSuccess(['estado' => $estado]);
-    }
+    $model->setEstado($id, $estado);
+    WsNotifier::send('ticket.changed', ['fecha' => $ticket['fecha']]); // <- ahora sí existe
+    $this->jsonSuccess(['estado' => $estado]);
+}
 
     public function getSlots(): void
     {
@@ -187,6 +191,7 @@ class TicketController
                 $this->jsonError('Ese horario ya está ocupado.', 409);
 
             $model->reschedule($ticketId, $newFecha, $newHorarioId, $newTecnicoId);
+            WsNotifier::send('ticket.changed', ['fecha' => $ticket['fecha']]);
             $horarioModel = new HorarioModel();
             $horario = $horarioModel->findById($newHorarioId);
             $this->jsonSuccess([
@@ -240,6 +245,7 @@ class TicketController
 
         $db = Database::getInstance()->getConnection();
         $stmt = $db->prepare("UPDATE tm_ticket SET caja_puerto = :cp WHERE ticket_id = :id");
+        WsNotifier::send('ticket.changed', ['fecha' => date('Y-m-d')]);
         $stmt->execute([':cp' => $cajaPuerto, ':id' => $id]);
 
         $this->jsonSuccess(['updated' => true]);
@@ -270,6 +276,7 @@ class TicketController
             trim($body['respuesta_cliente'] ?? ''),
             (int) ($body['es_calidad'] ?? 0)          // ← nuevo campo
         );
+        WsNotifier::send('ticket.changed', ['fecha' => date('Y-m-d')]);
         $this->jsonSuccess(['saved' => true]);
     }
 
@@ -293,6 +300,7 @@ class TicketController
             $this->jsonError('Ticket no encontrado.', 404);
 
         $model->delete($id);
+        WsNotifier::send('ticket.changed', ['fecha' => $ticket['fecha']]);
         $this->jsonSuccess(['deleted' => true]);
     }
 

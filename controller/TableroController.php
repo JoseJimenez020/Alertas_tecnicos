@@ -97,7 +97,8 @@ class TableroController
                 u.rol_id   AS agente_rol,
                 u.nombre   AS agente_nombre,
                 u.color    AS agente_color,
-                COUNT(tl.llamada_id) AS total_llamadas
+                COUNT(tl.llamada_id) AS total_llamadas,
+                MAX(tl.es_calidad)   AS calidad_hecha
             FROM tm_ticket tt
             JOIN tm_usuarios u  ON u.usu_id    = tt.usuario_id
             LEFT JOIN tm_llamadas tl ON tl.ticket_id = tt.ticket_id
@@ -122,6 +123,7 @@ class TableroController
                 'estado' => $r['estado'],
                 'tipo_ticket' => (int) ($r['tipo_ticket'] ?? 1),
                 'total_llamadas' => (int) $r['total_llamadas'],
+                'calidad_hecha'  => (int) ($r['calidad_hecha'] ?? 0),
             ];
         }
 

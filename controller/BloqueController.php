@@ -46,6 +46,7 @@ class BloqueController {
             'horas_ids'   => $body['horas_ids'] ?? null,
             'descripcion' => $body['descripcion'] ?? null,
         ]);
+        WsNotifier::send('tecnico.changed', []);
 
         $this->jsonSuccess(['bloqueo_id' => $id]);
     }
@@ -70,6 +71,7 @@ class BloqueController {
             'horas_ids'   => $body['horas_ids'] ?? null,
             'descripcion' => $body['descripcion'] ?? null,
         ]);
+        WsNotifier::send('tecnico.changed', []);
 
         $this->jsonSuccess(['updated' => true]);
     }
@@ -85,6 +87,7 @@ class BloqueController {
         $model = new BloqueModel();
         if (!$model->findById($id)) $this->jsonError('Bloqueo no encontrado.', 404);
         $model->delete($id);
+        WsNotifier::send('tecnico.changed', []);
 
         $this->jsonSuccess(['deleted' => true]);
     }
