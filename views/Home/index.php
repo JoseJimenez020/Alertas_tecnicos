@@ -894,6 +894,7 @@
                 'bg-m-blue' => '#5bc0de',
                 'bg-bluemarco' => '#94DCF8',
                 'bg-purple' => '#D86DCD',
+                'bg-cajera' => '#79308C',
             ];
             $fill = $colorHex[$colorClass] ?? '#F2CEEF';
 
@@ -903,7 +904,7 @@
         </svg>';
         }
 
-        $shape = ($rolId === 2) ? 'square' : 'circle';
+        $shape = ($rolId === 2 || $rolId === 6) ? 'square' : 'circle';
         return '<span class="' . $shape . ' ' . $colorClass . '"></span>';
     }
 
@@ -949,8 +950,8 @@
     }
 
     $rolId = (int) $usuario['rol_id'];
-    $canCreate = in_array($rolId, [1, 2, 3, 4]);
-    $rolesNombres = ['', 'Call Center', 'Mesa de Control', 'Supervisor CC', 'Administrador', 'Encargado de Zona'];
+    $canCreate = in_array($rolId, [1, 2, 3, 4, 6]);
+    $rolesNombres = ['', 'Call Center', 'Mesa de Control', 'Supervisor CC', 'Administrador', 'Encargado de Zona', 'Cajera'];
     $fechaHoy = date('Y-m-d');
     ?>
     <div class="container">
