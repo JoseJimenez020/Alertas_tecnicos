@@ -2195,7 +2195,7 @@
                 <path d="M12 2L2 22h20L12 2z" fill="${fill}" stroke="white" stroke-width="1"/>
             </svg>`;
                 } else {
-                    const shape = t.agente_rol === 2 ? 'square' : 'circle';
+                    const shape = (t.agente_rol === 2 || t.agente_rol === 6) ? 'square' : 'circle';
                     iconHtml = `<span class="${shape} ${colorClass}"></span>`;
                 }
 

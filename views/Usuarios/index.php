@@ -107,7 +107,7 @@
         </thead>
         <tbody>
         <?php
-        $rolesNombres = ['','Call Center','Mesa de Control','Supervisor CC','Administrador','Cajera'];
+        $rolesNombres = ['','Call Center','Mesa de Control','Supervisor CC','Administrador', 'Encargado de zona', 'Cajera'];
         foreach ($usuarios as $u):
         ?>
         <tr>
