@@ -24,6 +24,7 @@ class AdminController {
             'fecha_hasta' => $_GET['fecha_hasta']  ?? '',
             'usuario_id'  => $_GET['usuario_id']   ?? '',
             'estado'      => $_GET['estado']        ?? '',
+            'tipo_ticket' => $_GET['tipo_ticket']   ?? '',
         ];
 
         $tickets  = $ticketModel->getForReport(array_filter($filtros));

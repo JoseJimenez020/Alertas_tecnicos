@@ -86,6 +86,10 @@ class TicketModel
                 $where[] = "(tt.estado IS NULL OR tt.estado != 'terminado')";
             }
         }
+        if (!empty($filtros['tipo_ticket'])) {
+            $where[] = 'tt.tipo_ticket = :tipo_ticket';
+            $params[':tipo_ticket'] = (int) $filtros['tipo_ticket'];
+        }
 
         $whereSQL = $where ? 'WHERE ' . implode(' AND ', $where) : '';
 
@@ -109,6 +113,9 @@ class TicketModel
                 MAX(CASE WHEN tl.no_llamada = 2 THEN tl.respuesta_cliente END) AS ll2_cliente,
                 MAX(CASE WHEN tl.no_llamada = 3 THEN tl.respuesta_tecnico END) AS ll3_tecnico,
                 MAX(CASE WHEN tl.no_llamada = 3 THEN tl.respuesta_cliente END) AS ll3_cliente,
+                MAX(CASE WHEN tl.no_llamada = 4 THEN tl.respuesta_cliente END) AS ll_calidad_cliente,
+                tt.tipo_ticket,
+                tt.caja_puerto,
                 COUNT(tl.llamada_id) AS total_llamadas
             FROM tm_ticket tt
             JOIN tecnicos     tec ON tec.TecnicoId  = tt.tecnico_id

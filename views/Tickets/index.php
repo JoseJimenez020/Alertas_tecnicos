@@ -54,6 +54,14 @@
             display:inline-block; background:#888; color:#fff;
             padding:2px 8px; border-radius:10px; font-size:10px; white-space:nowrap;
         }
+        .badge-tipo-retiro {
+            display:inline-block; background:#6f42c1; color:#fff;
+            padding:2px 6px; border-radius:10px; font-size:10px; white-space:nowrap;
+        }
+        .badge-tipo-normal {
+            display:inline-block; background:#17a2b8; color:#fff;
+            padding:2px 6px; border-radius:10px; font-size:10px; white-space:nowrap;
+        }
 
         /* Llamadas consolidadas */
         .llamada-cell { font-size:10px; line-height:1.5; min-width:140px; }
@@ -64,6 +72,9 @@
         }
         .llamada-val { color:#333; }
         .llamada-sep { border-top:1px dashed #ccc; margin:3px 0; }
+
+        /* Llamada de calidad con color diferente */
+        .llamada-cell.calidad .llamada-label { color:#1a7a4a; }
 
         .resumen { font-size:12px; color:#555; margin-bottom:10px; }
         .resumen strong { color:#1a4d6d; }
@@ -137,6 +148,14 @@
                     <option value="terminado"  <?= (($_GET['estado'] ?? '') === 'terminado')  ? 'selected' : '' ?>>Terminado</option>
                 </select>
             </div>
+            <div class="f-group">
+                <label>Tipo de ticket</label>
+                <select name="tipo_ticket">
+                    <option value="">— Todos —</option>
+                    <option value="1" <?= (($_GET['tipo_ticket'] ?? '') === '1') ? 'selected' : '' ?>>Ticket normal</option>
+                    <option value="2" <?= (($_GET['tipo_ticket'] ?? '') === '2') ? 'selected' : '' ?>>Retiro de equipo</option>
+                </select>
+            </div>
             <button type="submit" class="btn-filtrar">🔍 Filtrar</button>
             <a href="?action=admin.reporte" class="btn-limpiar">✕ Limpiar</a>
         </div>
@@ -162,6 +181,7 @@
                     <th>Fecha</th>
                     <th>Hora</th>
                     <th>Estado</th>
+                    <th>Tipo</th>
                     <th>Num. Ticket</th>
                     <th>Cliente</th>
                     <th>Colonia</th>
@@ -170,9 +190,11 @@
                     <th>Técnico</th>
                     <th>Tel. Técnico</th>
                     <th>Agente</th>
+                    <th>Caja / Puerto</th>
                     <th>Llamada 1</th>
                     <th>Llamada 2</th>
                     <th>Llamada 3</th>
+                    <th>Calidad</th>
                 </tr>
             </thead>
             <tbody id="tbodyVisible"></tbody>
@@ -186,12 +208,13 @@
         <thead>
             <tr>
                 <th>#</th><th>Fecha</th><th>Hora</th><th>Estado</th>
-                <th>Num. Ticket</th><th>Cliente</th><th>Colonia</th>
+                <th>Tipo</th><th>Num. Ticket</th><th>Cliente</th><th>Colonia</th>
                 <th>Tel. Cliente</th><th>Descripción</th><th>Técnico</th>
-                <th>Tel. Técnico</th><th>Agente</th>
+                <th>Tel. Técnico</th><th>Agente</th><th>Caja / Puerto</th>
                 <th>Llamada 1 — Técnico</th><th>Llamada 1 — Cliente</th>
                 <th>Llamada 2 — Técnico</th><th>Llamada 2 — Cliente</th>
                 <th>Llamada 3 — Técnico</th><th>Llamada 3 — Cliente</th>
+                <th>Calidad — Cliente</th>
             </tr>
         </thead>
         <tbody>
@@ -199,12 +222,14 @@
             $esTerminado = $t['estado'] === 'terminado';
             $esRojo      = !$esTerminado && (int)$t['total_llamadas'] >= 3;
             $trClass     = $esTerminado ? 'estado-terminado' : ($esRojo ? 'estado-rojo' : '');
+            $esRetiro    = (int)($t['tipo_ticket'] ?? 1) === 2;
         ?>
         <tr class="<?= $trClass ?>">
             <td><?= $i + 1 ?></td>
             <td><?= date('d/m/Y', strtotime($t['fecha'])) ?></td>
             <td><?= htmlspecialchars(substr($t['hora'], 0, 5)) ?></td>
             <td><?= $esTerminado ? 'Terminado' : 'En proceso' ?></td>
+            <td><?= $esRetiro ? 'Retiro de equipo' : 'Normal' ?></td>
             <td><?= htmlspecialchars($t['num_ticket']) ?></td>
             <td><?= htmlspecialchars($t['Cliente']) ?></td>
             <td><?= htmlspecialchars($t['colonia']) ?></td>
@@ -213,12 +238,14 @@
             <td><?= htmlspecialchars($t['tecnico_nombre']) ?></td>
             <td><?= htmlspecialchars($t['telefono_tecnico'] ?? '—') ?></td>
             <td><?= htmlspecialchars($t['agente_nombre']) ?></td>
+            <td><?= htmlspecialchars($t['caja_puerto'] ?? '') ?></td>
             <td><?= htmlspecialchars($t['ll1_tecnico'] ?? '') ?></td>
             <td><?= htmlspecialchars($t['ll1_cliente'] ?? '') ?></td>
             <td><?= htmlspecialchars($t['ll2_tecnico'] ?? '') ?></td>
             <td><?= htmlspecialchars($t['ll2_cliente'] ?? '') ?></td>
             <td><?= htmlspecialchars($t['ll3_tecnico'] ?? '') ?></td>
             <td><?= htmlspecialchars($t['ll3_cliente'] ?? '') ?></td>
+            <td><?= htmlspecialchars($t['ll_calidad_cliente'] ?? '') ?></td>
         </tr>
         <?php endforeach; ?>
         </tbody>
@@ -244,20 +271,23 @@ const FILAS_DATOS = (() => {
             fecha       : celdas[1]?.textContent.trim()  ?? '',
             hora        : celdas[2]?.textContent.trim()  ?? '',
             estado      : celdas[3]?.textContent.trim()  ?? '',
-            num_ticket  : celdas[4]?.textContent.trim()  ?? '',
-            cliente     : celdas[5]?.textContent.trim()  ?? '',
-            colonia     : celdas[6]?.textContent.trim()  ?? '',
-            tel_cliente : celdas[7]?.textContent.trim()  ?? '',
-            descripcion : celdas[8]?.textContent.trim()  ?? '',
-            tecnico     : celdas[9]?.textContent.trim()  ?? '',
-            tel_tecnico : celdas[10]?.textContent.trim() ?? '',
-            agente      : celdas[11]?.textContent.trim() ?? '',
-            ll1_tec     : celdas[12]?.textContent.trim() ?? '',
-            ll1_cli     : celdas[13]?.textContent.trim() ?? '',
-            ll2_tec     : celdas[14]?.textContent.trim() ?? '',
-            ll2_cli     : celdas[15]?.textContent.trim() ?? '',
-            ll3_tec     : celdas[16]?.textContent.trim() ?? '',
-            ll3_cli     : celdas[17]?.textContent.trim() ?? '',
+            tipo        : celdas[4]?.textContent.trim()  ?? '',
+            num_ticket  : celdas[5]?.textContent.trim()  ?? '',
+            cliente     : celdas[6]?.textContent.trim()  ?? '',
+            colonia     : celdas[7]?.textContent.trim()  ?? '',
+            tel_cliente : celdas[8]?.textContent.trim()  ?? '',
+            descripcion : celdas[9]?.textContent.trim()  ?? '',
+            tecnico     : celdas[10]?.textContent.trim() ?? '',
+            tel_tecnico : celdas[11]?.textContent.trim() ?? '',
+            agente      : celdas[12]?.textContent.trim() ?? '',
+            caja_puerto : celdas[13]?.textContent.trim() ?? '',
+            ll1_tec     : celdas[14]?.textContent.trim() ?? '',
+            ll1_cli     : celdas[15]?.textContent.trim() ?? '',
+            ll2_tec     : celdas[16]?.textContent.trim() ?? '',
+            ll2_cli     : celdas[17]?.textContent.trim() ?? '',
+            ll3_tec     : celdas[18]?.textContent.trim() ?? '',
+            ll3_cli     : celdas[19]?.textContent.trim() ?? '',
+            calidad_cli : celdas[20]?.textContent.trim() ?? '',
             esTerminado : tr.classList.contains('estado-terminado'),
             esRojo      : tr.classList.contains('estado-rojo'),
         };
@@ -265,9 +295,9 @@ const FILAS_DATOS = (() => {
 })();
 
 /* ── Construir una celda de llamada consolidada ── */
-function celdaLlamada(tecVal, cliVal) {
-    if (!tecVal && !cliVal) return '<td class="llamada-cell">—</td>';
-    let html = '<td class="llamada-cell">';
+function celdaLlamada(tecVal, cliVal, esCalidad = false) {
+    if (!tecVal && !cliVal) return `<td class="llamada-cell${esCalidad ? ' calidad' : ''}">—</td>`;
+    let html = `<td class="llamada-cell${esCalidad ? ' calidad' : ''}">`;
     if (tecVal) html += `<div class="llamada-row"><span class="llamada-label">Técnico:</span><span class="llamada-val">${escHtml(tecVal)}</span></div>`;
     if (cliVal) {
         if (tecVal) html += '<div class="llamada-sep"></div>';
@@ -275,6 +305,16 @@ function celdaLlamada(tecVal, cliVal) {
     }
     html += '</td>';
     return html;
+}
+
+function celdaCalidad(cliVal) {
+    if (!cliVal) return '<td class="llamada-cell calidad">—</td>';
+    return `<td class="llamada-cell calidad">
+        <div class="llamada-row">
+            <span class="llamada-label" style="color:#1a7a4a;">⭐ Cliente:</span>
+            <span class="llamada-val">${escHtml(cliVal)}</span>
+        </div>
+    </td>`;
 }
 
 function escHtml(str) {
@@ -294,11 +334,15 @@ function renderPagina(pagina) {
         const badge   = f.esTerminado
             ? '<span class="badge-terminado">Terminado</span>'
             : '<span class="badge-proceso">En proceso</span>';
+        const badgeTipo = f.tipo === 'Retiro de equipo'
+            ? '<span class="badge-tipo-retiro">▲ Retiro</span>'
+            : '<span class="badge-tipo-normal">Ticket</span>';
         return `<tr class="${trClass}">
             <td>${f.num}</td>
             <td>${f.fecha}</td>
             <td>${f.hora}</td>
             <td>${badge}</td>
+            <td>${badgeTipo}</td>
             <td>${escHtml(f.num_ticket)}</td>
             <td>${escHtml(f.cliente)}</td>
             <td>${escHtml(f.colonia)}</td>
@@ -307,9 +351,11 @@ function renderPagina(pagina) {
             <td>${escHtml(f.tecnico)}</td>
             <td>${escHtml(f.tel_tecnico)}</td>
             <td>${escHtml(f.agente)}</td>
+            <td>${escHtml(f.caja_puerto)}</td>
             ${celdaLlamada(f.ll1_tec, f.ll1_cli)}
             ${celdaLlamada(f.ll2_tec, f.ll2_cli)}
             ${celdaLlamada(f.ll3_tec, f.ll3_cli)}
+            ${celdaCalidad(f.calidad_cli)}
         </tr>`;
     }).join('');
 
@@ -356,17 +402,20 @@ function exportarExcel() {
     if (!FILAS_DATOS.length) { alert('No hay datos para exportar.'); return; }
 
     const cabeceras = [
-        '#','Fecha','Hora','Estado','Num. Ticket','Cliente','Colonia',
-        'Tel. Cliente','Descripción','Técnico','Tel. Técnico','Agente',
+        '#','Fecha','Hora','Estado','Tipo','Num. Ticket','Cliente','Colonia',
+        'Tel. Cliente','Descripción','Técnico','Tel. Técnico','Agente','Caja / Puerto',
         'Llamada 1 — Técnico','Llamada 1 — Cliente',
         'Llamada 2 — Técnico','Llamada 2 — Cliente',
         'Llamada 3 — Técnico','Llamada 3 — Cliente',
+        'Calidad — Cliente',
     ];
 
     const filas = FILAS_DATOS.map(f => [
-        f.num, f.fecha, f.hora, f.estado, f.num_ticket, f.cliente,
+        f.num, f.fecha, f.hora, f.estado, f.tipo, f.num_ticket, f.cliente,
         f.colonia, f.tel_cliente, f.descripcion, f.tecnico, f.tel_tecnico,
-        f.agente, f.ll1_tec, f.ll1_cli, f.ll2_tec, f.ll2_cli, f.ll3_tec, f.ll3_cli,
+        f.agente, f.caja_puerto,
+        f.ll1_tec, f.ll1_cli, f.ll2_tec, f.ll2_cli, f.ll3_tec, f.ll3_cli,
+        f.calidad_cli,
     ]);
 
     const ws = XLSX.utils.aoa_to_sheet([cabeceras, ...filas]);
@@ -394,17 +443,20 @@ function exportarPDF() {
     doc.text(`Generado: ${new Date().toLocaleString('es-MX')}`, 14, 20);
 
     const cabeceras = [
-        '#','Fecha','Hora','Estado','Núm. Ticket','Cliente','Colonia',
-        'Tel. Cliente','Descripción','Técnico','Tel. Técnico','Agente',
+        '#','Fecha','Hora','Estado','Tipo','Núm. Ticket','Cliente','Colonia',
+        'Tel. Cliente','Descripción','Técnico','Tel. Técnico','Agente','Caja/Puerto',
         'Llamada 1\nTécnico','Llamada 1\nCliente',
         'Llamada 2\nTécnico','Llamada 2\nCliente',
         'Llamada 3\nTécnico','Llamada 3\nCliente',
+        'Calidad\nCliente',
     ];
 
     const rows = FILAS_DATOS.map(f => [
-        f.num, f.fecha, f.hora, f.estado, f.num_ticket, f.cliente,
+        f.num, f.fecha, f.hora, f.estado, f.tipo, f.num_ticket, f.cliente,
         f.colonia, f.tel_cliente, f.descripcion, f.tecnico, f.tel_tecnico,
-        f.agente, f.ll1_tec, f.ll1_cli, f.ll2_tec, f.ll2_cli, f.ll3_tec, f.ll3_cli,
+        f.agente, f.caja_puerto,
+        f.ll1_tec, f.ll1_cli, f.ll2_tec, f.ll2_cli, f.ll3_tec, f.ll3_cli,
+        f.calidad_cli,
     ]);
 
     doc.autoTable({
