@@ -895,6 +895,7 @@
                 'bg-bluemarco' => '#94DCF8',
                 'bg-purple' => '#D86DCD',
                 'bg-cajera' => '#79308C',
+                'bg-cobranza' => '#F4320B',
             ];
             $fill = $colorHex[$colorClass] ?? '#F2CEEF';
 
@@ -904,7 +905,7 @@
         </svg>';
         }
 
-        $shape = ($rolId === 2 || $rolId === 6) ? 'square' : 'circle';
+        $shape = ($rolId === 2 || $rolId === 6 || $rolId === 7) ? 'square' : 'circle';
         return '<span class="' . $shape . ' ' . $colorClass . '"></span>';
     }
 
@@ -950,8 +951,8 @@
     }
 
     $rolId = (int) $usuario['rol_id'];
-    $canCreate = in_array($rolId, [1, 2, 3, 4, 6]);
-    $rolesNombres = ['', 'Call Center', 'Mesa de Control', 'Supervisor CC', 'Administrador', 'Encargado de Zona', 'Cajera'];
+    $canCreate = in_array($rolId, [1, 2, 3, 4, 6, 7]);
+    $rolesNombres = ['', 'Call Center', 'Mesa de Control', 'Supervisor CC', 'Administrador', 'Encargado de Zona', 'Cajera', 'Cobranza'];
     $fechaHoy = date('Y-m-d');
     ?>
     <div class="container">
@@ -973,7 +974,7 @@
                         style="padding:4px 6px;font-size:12px;border:1px solid #ccc;">
                     <button type="submit" class="btn btn-primary" style="padding:5px 10px;">Ver</button>
                 </form>
-                <?php if (in_array($rolId, [1, 2, 3, 4, 5])): ?>
+                <?php if (in_array($rolId, [1, 2, 3, 4, 5, 6 , 7])): ?>
                     <div class="dropdown" id="searchDropdown" style="position:relative;">
                         <div class="buscador-wrap" style="display:flex;">
                             <input type="text" id="searchTicketInput" placeholder="Buscar num. ticket…"
@@ -1195,7 +1196,19 @@
                         <span class="list-item-nombre"><?= htmlspecialchars(strtoupper($u['nombre'])) ?></span>
                     </div>
                 <?php endforeach; ?>
+
+                <h3 style="margin-top:15px;">Cobranza</h3>
+                <?php
+                $mesa2Users = array_filter($todosUs, fn($u) => $u['rol_id'] == 7);
+                foreach ($mesa2Users as $u): ?>
+                    <div class="list-item <?= htmlspecialchars($u['color']) ?>">
+                        <span class="list-item-nombre" style="color: white;">
+                            <?= htmlspecialchars(strtoupper($u['nombre'])) ?>
+                        </span>
+                    </div>
+                <?php endforeach; ?>
             </div>
+
         </div>
     </div>
 
@@ -2189,13 +2202,14 @@
                         'bg-peach': '#F1A983', 'bg-blue': '#00B0F0', 'bg-orange': '#FFC000',
                         'bg-gray': '#F2CEEF', 'bg-violet': '#D86DCD', 'bg-lightblue': '#DAE9F8',
                         'bg-m-blue': '#5bc0de', 'bg-bluemarco': '#94DCF8', 'bg-purple': '#D86DCD',
+                        'bg-cobranza': '#F4320B',
                     };
                     const fill = colorHex[colorClass] || '#F2CEEF';
                     iconHtml = `<svg width="24" height="24" viewBox="0 0 24 24" style="display:block;margin:auto;">
                 <path d="M12 2L2 22h20L12 2z" fill="${fill}" stroke="white" stroke-width="1"/>
             </svg>`;
                 } else {
-                    const shape = (t.agente_rol === 2 || t.agente_rol === 6) ? 'square' : 'circle';
+                    const shape = (t.agente_rol === 2 || t.agente_rol === 6 || t.agente_rol === 7) ? 'square' : 'circle';
                     iconHtml = `<span class="${shape} ${colorClass}"></span>`;
                 }
 

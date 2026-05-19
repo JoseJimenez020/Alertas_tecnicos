@@ -93,6 +93,7 @@
         <span>4 = Administrador</span>
         <span>5 = Encargado de zona</span>
         <span>6 = Cajera</span>
+        <span>7 = Cobranza</span>
     </div>
 
     <button class="btn btn-primary" onclick="openCreate()" style="margin-bottom:12px;">
@@ -107,7 +108,7 @@
         </thead>
         <tbody>
         <?php
-        $rolesNombres = ['','Call Center','Mesa de Control','Supervisor CC','Administrador', 'Encargado de zona', 'Cajera'];
+        $rolesNombres = ['','Call Center','Mesa de Control','Supervisor CC','Administrador', 'Encargado de zona', 'Cajera', 'Cobranza'];
         foreach ($usuarios as $u):
         ?>
         <tr>
@@ -162,6 +163,7 @@
                 <option value="4">4 — Administrador</option>
                 <option value="5">5 — Encargado de zona</option>
                 <option value="6">6 — Cajera</option>
+                <option value="7">7 — Cobranza</option>
             </select>
 
             <label>Color en el tablero</label>
@@ -181,6 +183,7 @@
                     'bg-bluemarco' => 'Azul marco (#94DCF8)',
                     'bg-purple'    => 'Morado (#D86DCD)',
                     'bg-cajera'    => 'Cajera (#79308C)',
+                    'bg-cobranza'  => 'Cobranza (#F4320B)',
                 ];
                 foreach ($colores as $val => $lbl): ?>
                 <option value="<?= $val ?>"><?= $lbl ?></option>
@@ -207,7 +210,7 @@ const COLOR_HEX = {
     'bg-peach'    :'#F1A983','bg-blue'     :'#00B0F0','bg-orange'   :'#FFC000',
     'bg-gray'     :'#F2CEEF','bg-violet'   :'#D86DCD','bg-lightblue':'#DAE9F8',
     'bg-m-blue'   :'#5bc0de','bg-bluemarco':'#94DCF8','bg-purple'   :'#D86DCD',
-    'bg-cajera'   :'#79308C',
+    'bg-cajera'   :'#79308C', 'bg-cobranza' :'#F4320B',
 };
 
 let modoEdicion = false;

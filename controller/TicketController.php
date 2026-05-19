@@ -6,7 +6,7 @@ class TicketController
     {
         $this->requireJson();
         $usuario = $_SESSION['usuario'];
-        if (!in_array($usuario['rol_id'], [1, 2, 3, 6]))
+        if (!in_array($usuario['rol_id'], [1, 2, 3, 6, 7]))
             $this->jsonError('Sin permisos.', 403);
 
         $body = $this->jsonBody();
@@ -28,7 +28,7 @@ class TicketController
 
         // Validar el tipo de ticket asegurando que si no es el usuario 2, forzosamente sea 1.
         $tipo_ticket = isset($body['tipo_ticket']) ? (int) $body['tipo_ticket'] : 1;
-        $puedeCrearTipo2 = ((int) $usuario['id'] === 2 || (int) $usuario['rol_id'] === 6);
+        $puedeCrearTipo2 = ((int) $usuario['id'] === 2 || (int) $usuario['rol_id'] === 6 || (int) $usuario['rol_id'] === 7);
         if ($tipo_ticket === 2 && !$puedeCrearTipo2) {
             $tipo_ticket = 1;
         }
@@ -283,7 +283,7 @@ class TicketController
     {
         $this->requireJson();
         $usuario = $_SESSION['usuario'];
-        if (!in_array($usuario['rol_id'], [1, 2, 3, 4, 6]))
+        if (!in_array($usuario['rol_id'], [1, 2, 3, 4, 6, 7]))
             $this->jsonError('Sin permisos.', 403);
 
         $body = $this->jsonBody();
@@ -313,7 +313,7 @@ class TicketController
         $this->requireJson();
         $usuario = $_SESSION['usuario'];
 
-        if (!in_array($usuario['rol_id'], [1, 2, 3, 4, 6])) {
+        if (!in_array($usuario['rol_id'], [1, 2, 3, 4, 6, 7])) {
             $this->jsonError('Sin permisos para eliminar tickets.', 403);
         }
 
@@ -336,7 +336,7 @@ class TicketController
     {
         header('Content-Type: application/json; charset=utf-8');
         $usuario = $_SESSION['usuario'];
-        if (!in_array($usuario['rol_id'], [1, 2, 3, 4, 5, 6]))
+        if (!in_array($usuario['rol_id'], [1, 2, 3, 4, 5, 6, 7]))
             $this->jsonError('Sin permisos.', 403);
 
         $q = trim($_GET['q'] ?? '');
