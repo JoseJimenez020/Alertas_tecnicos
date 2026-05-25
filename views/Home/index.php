@@ -974,7 +974,7 @@
                         style="padding:4px 6px;font-size:12px;border:1px solid #ccc;">
                     <button type="submit" class="btn btn-primary" style="padding:5px 10px;">Ver</button>
                 </form>
-                <?php if (in_array($rolId, [1, 2, 3, 4, 5, 6 , 7])): ?>
+                
                     <div class="dropdown" id="searchDropdown" style="position:relative;">
                         <div class="buscador-wrap" style="display:flex;">
                             <input type="text" id="searchTicketInput" placeholder="Buscar num. ticket…"
@@ -983,7 +983,7 @@
                         </div>
                         <div class="search-dropdown" id="searchDropdownMenu"></div>
                     </div>
-                <?php endif; ?>
+                
                 <div class="dropdown" id="menuDropdown">
                     <button class="dropdown-toggle" onclick="toggleMenu(event)">☰ Menú</button>
                     <div class="dropdown-menu" id="dropdownMenu">
@@ -1197,7 +1197,7 @@
                     </div>
                 <?php endforeach; ?>
 
-                <h3 style="margin-top:15px;">Cobranza</h3>
+                <h3 style="margin-top:15px;">Ventas</h3>
                 <?php
                 $mesa2Users = array_filter($todosUs, fn($u) => $u['rol_id'] == 7);
                 foreach ($mesa2Users as $u): ?>
