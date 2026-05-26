@@ -974,16 +974,16 @@
                         style="padding:4px 6px;font-size:12px;border:1px solid #ccc;">
                     <button type="submit" class="btn btn-primary" style="padding:5px 10px;">Ver</button>
                 </form>
-                
-                    <div class="dropdown" id="searchDropdown" style="position:relative;">
-                        <div class="buscador-wrap" style="display:flex;">
-                            <input type="text" id="searchTicketInput" placeholder="Buscar num. ticket…"
-                                onkeydown="if(event.key==='Enter') buscarTicket()">
-                            <button onclick="buscarTicket()">🔍</button>
-                        </div>
-                        <div class="search-dropdown" id="searchDropdownMenu"></div>
+
+                <div class="dropdown" id="searchDropdown" style="position:relative;">
+                    <div class="buscador-wrap" style="display:flex;">
+                        <input type="text" id="searchTicketInput" placeholder="Buscar num. ticket…"
+                            onkeydown="if(event.key==='Enter') buscarTicket()">
+                        <button onclick="buscarTicket()">🔍</button>
                     </div>
-                
+                    <div class="search-dropdown" id="searchDropdownMenu"></div>
+                </div>
+
                 <div class="dropdown" id="menuDropdown">
                     <button class="dropdown-toggle" onclick="toggleMenu(event)">☰ Menú</button>
                     <div class="dropdown-menu" id="dropdownMenu">
@@ -1365,6 +1365,7 @@
                     <option value="apoyo">🔧 No disponible — Apoyo</option>
                     <option value="vacaciones">🏖 No disponible — Vacaciones</option>
                     <option value="mecanico">🔴 No disponible — Mecánico</option>
+                    <option value="no_se_presento">⚫ No se presentó</option>
                 </select>
 
                 <div id="tCamposFechas" class="campos-motivo-t" style="margin-top:10px;">
@@ -1413,8 +1414,8 @@
         }
         document.addEventListener('click', () => document.getElementById('dropdownMenu').classList.remove('open'));
 
-        /* ── Lápiz técnico (rol 2) ──────────────────────────────── */
-        if (ROL_ID === 2) {
+        /* ── Lápiz técnico (rol 2 y 6) ──────────────────────────────── */
+        if (ROL_ID === 2 || ROL_ID === 6) {
             document.querySelectorAll('.btn-tecnico-status').forEach(b => b.style.display = 'inline-block');
         }
 
@@ -1902,7 +1903,7 @@
             document.getElementById('tCamposFechas').classList.toggle('visible', motivo !== '');
             document.getElementById('tCamposHoras').classList.toggle('visible', motivo === 'mecanico');
             document.getElementById('tCamposDesc').style.display =
-                (motivo === 'mecanico' || motivo === 'apoyo') ? 'block' : 'none';
+                (motivo === 'mecanico' || motivo === 'apoyo' || motivo === 'no_se_presento') ? 'block' : 'none';
         }
 
         function poblarHorasGrid() {
@@ -1991,7 +1992,8 @@
                 fb.textContent = 'La fecha de inicio no puede ser posterior a la fecha final.'; fb.className = 'feedback error'; return;
             }
             if ((motivo === 'mecanico' || motivo === 'apoyo') && !payload.descripcion) {
-                fb.textContent = 'El motivo/descripción es obligatorio.'; fb.className = 'feedback error'; return;
+                fb.textContent = 'El motivo/descripción es obligatorio.';
+                fb.className = 'feedback error'; return;
             }
 
             if (motivo === 'mecanico') {

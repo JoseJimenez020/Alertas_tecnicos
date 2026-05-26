@@ -85,7 +85,7 @@ class TecnicoController
         if (!$id)
             $this->jsonError('ID inválido.', 422);
 
-        $motivosValidos = [null, '', 'apoyo', 'vacaciones', 'mecanico'];
+        $motivosValidos = [null, '', 'apoyo', 'vacaciones', 'mecanico', 'no_se_presento'];
         if (!in_array($motivo, $motivosValidos, true))
             $this->jsonError('Motivo inválido.', 422);
 
@@ -129,6 +129,8 @@ class TecnicoController
             } elseif ($motivoNorm === 'apoyo') {
                 if (empty($descripcion))
                     $this->jsonError('El motivo es obligatorio para apoyo.', 422);
+            } elseif ($motivoNorm === 'no_se_presento') {
+                // No requiere descripción obligatoria, pero se permite
             }
 
             // Guardar bloqueo
@@ -167,7 +169,7 @@ class TecnicoController
     private function requireMesa(): void
     {
         $rol = (int) $_SESSION['usuario']['rol_id'];
-        if (!in_array($rol, [2, 4])) {
+        if (!in_array($rol, [2, 4, 6])) {
             http_response_code(403);
             die('Acceso denegado.');
         }
