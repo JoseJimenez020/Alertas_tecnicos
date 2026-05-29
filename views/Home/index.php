@@ -998,6 +998,9 @@
                             <a href="?action=admin.usuarios">👥 Gestión de Usuarios</a>
                             <a href="?action=admin.reporte">📊 Reporte de Tickets</a>
                         <?php endif; ?>
+                        <?php if ($rolId === 6): ?>
+                            <a href="?action=admin.usuarios">👥 Materiales</a>
+                        <?php endif; ?>
                         <div class="menu-section">Sesión</div>
                         <button class="menu-btn" onclick="document.getElementById('frmLogout').submit()">
                             🚪 Cerrar sesión
@@ -1399,6 +1402,30 @@
         </div>
     </div>
 
+
+    <!-- ══════════════ MODAL MATERIALES (rol 6) ══════════════ -->
+    <div class="modal-overlay" id="modalMateriales">
+        <div class="modal-box" style="width:460px;">
+            <div class="modal-header">
+                <h3>Registro de Materiales</h3>
+                <button class="modal-close" onclick="closeModal('modalMateriales')">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="feedback" id="materialesFeedback"></div>
+                <input type="hidden" id="mTicketId">
+
+                <!-- Los campos se agregarán aquí cuando se definan -->
+                <p style="font-size:12px;color:#888;text-align:center;padding:20px 0;">
+                    Hola
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('modalMateriales')">Cancelar</button>
+                <button class="btn btn-primary" onclick="guardarMateriales()">Guardar</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const ROL_ID = <?= (int) $rolId ?>;
         const USUARIO_ID = <?= (int) $usuario['id'] ?>;
@@ -1547,6 +1574,14 @@
             }
 
             let footer = `<button class="btn btn-secondary" onclick="closeModal('modalOverlay')">Cerrar</button>`;
+            // Botón Materiales: sólo rol 6, sólo en tickets tipo cuadrado (rol agente != 2, tipo_ticket == 1)
+            // Determinar si el ticket es visualmente un cuadrado
+            const esCuadrado = parseInt(t.tipo_ticket || 1) !== 2 && (t.agente_rol === 2 || t.agente_rol === 6 || t.agente_rol === 7);
+
+            // Botón Materiales: sólo rol 6 y estrictamente en tickets cuadrados
+            if (ROL_ID === 6 && esCuadrado) {
+                footer += `<button class="btn btn-primary" onclick="abrirModalMateriales(${t.ticket_id})">Materiales</button>`;
+            }
             footer += `<button class="btn btn-danger" onclick="deleteTicket(${t.ticket_id})">Eliminar</button>`;
 
             if (!soloLectura) {
@@ -2031,7 +2066,7 @@
             const [y, m, d] = str.split('-');
             return `${d}/${m}/${y}`;
         }
-        ['modalOverlay', 'modalTecnico', 'modalReagendar'].forEach(id => {
+        ['modalOverlay', 'modalTecnico', 'modalReagendar', 'modalMateriales'].forEach(id => {
             document.getElementById(id).addEventListener('click', function (e) {
                 if (e.target === this) closeModal(id);
             });
@@ -2285,6 +2320,36 @@
         // setInterval(syncTablero, 7000);
 
         inicializarNotificaciones();
+
+        /* ══════════════════════════════════════════════════════════
+        MODAL MATERIALES (rol 6)
+        ══════════════════════════════════════════════════════════ */
+        function abrirModalMateriales(ticketId) {
+            document.getElementById('mTicketId').value = ticketId;
+            const fb = document.getElementById('materialesFeedback');
+            fb.className = 'feedback'; fb.textContent = '';
+            openModal('modalMateriales');
+        }
+
+        async function guardarMateriales() {
+            const ticketId = parseInt(document.getElementById('mTicketId').value);
+            // Aquí construirás el payload con los campos que se definan
+            const payload = { ticket_id: ticketId };
+
+            const res = await fetch(`${BASE_URL}?action=materiales.store`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            });
+            const json = await res.json();
+            const fb = document.getElementById('materialesFeedback');
+            if (json.success) {
+                fb.textContent = '✓ Guardado correctamente.'; fb.className = 'feedback success';
+                setTimeout(() => closeModal('modalMateriales'), 1200);
+            } else {
+                fb.textContent = json.message || 'Error al guardar.'; fb.className = 'feedback error';
+            }
+        }
     </script>
 </body>
 

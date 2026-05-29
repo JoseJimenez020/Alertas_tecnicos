@@ -58,6 +58,10 @@ switch ($action) {
         (new TicketController())->updateCajaPuerto();
         break;
 
+    case 'materiales.store':
+        (new MaterialController())->store();
+        break;
+
     // ── Polling en vivo ───────────────────────────────────────────
     case 'tablero.estado':
         (new TableroController())->estado();
