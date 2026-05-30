@@ -894,6 +894,8 @@
                 'bg-m-blue' => '#5bc0de',
                 'bg-bluemarco' => '#94DCF8',
                 'bg-purple' => '#D86DCD',
+                'bg-cajera' => '#79308C',
+                'bg-cobranza' => '#F4320B',
             ];
             $fill = $colorHex[$colorClass] ?? '#F2CEEF';
 
@@ -903,7 +905,7 @@
         </svg>';
         }
 
-        $shape = ($rolId === 2) ? 'square' : 'circle';
+        $shape = ($rolId === 2 || $rolId === 6 || $rolId === 7) ? 'square' : 'circle';
         return '<span class="' . $shape . ' ' . $colorClass . '"></span>';
     }
 
@@ -949,8 +951,8 @@
     }
 
     $rolId = (int) $usuario['rol_id'];
-    $canCreate = in_array($rolId, [1, 2, 3, 4]);
-    $rolesNombres = ['', 'Call Center', 'Mesa de Control', 'Supervisor CC', 'Administrador', 'Encargado de Zona'];
+    $canCreate = in_array($rolId, [1, 2, 3, 4, 6, 7]);
+    $rolesNombres = ['', 'Call Center', 'Mesa de Control', 'Supervisor CC', 'Administrador', 'Encargado de Zona', 'Cajera', 'Cobranza'];
     $fechaHoy = date('Y-m-d');
     ?>
     <div class="container">
@@ -972,16 +974,16 @@
                         style="padding:4px 6px;font-size:12px;border:1px solid #ccc;">
                     <button type="submit" class="btn btn-primary" style="padding:5px 10px;">Ver</button>
                 </form>
-                <?php if (in_array($rolId, [1, 2, 3, 4, 5])): ?>
-                    <div class="dropdown" id="searchDropdown" style="position:relative;">
-                        <div class="buscador-wrap" style="display:flex;">
-                            <input type="text" id="searchTicketInput" placeholder="Buscar num. ticket…"
-                                onkeydown="if(event.key==='Enter') buscarTicket()">
-                            <button onclick="buscarTicket()">🔍</button>
-                        </div>
-                        <div class="search-dropdown" id="searchDropdownMenu"></div>
+
+                <div class="dropdown" id="searchDropdown" style="position:relative;">
+                    <div class="buscador-wrap" style="display:flex;">
+                        <input type="text" id="searchTicketInput" placeholder="Buscar num. ticket…"
+                            onkeydown="if(event.key==='Enter') buscarTicket()">
+                        <button onclick="buscarTicket()">🔍</button>
                     </div>
-                <?php endif; ?>
+                    <div class="search-dropdown" id="searchDropdownMenu"></div>
+                </div>
+
                 <div class="dropdown" id="menuDropdown">
                     <button class="dropdown-toggle" onclick="toggleMenu(event)">☰ Menú</button>
                     <div class="dropdown-menu" id="dropdownMenu">
@@ -995,6 +997,9 @@
                         <?php if ($rolId === 4): ?>
                             <a href="?action=admin.usuarios">👥 Gestión de Usuarios</a>
                             <a href="?action=admin.reporte">📊 Reporte de Tickets</a>
+                        <?php endif; ?>
+                        <?php if ($rolId === 6): ?>
+                            <a href="?action=admin.usuarios">👥 Materiales</a>
                         <?php endif; ?>
                         <div class="menu-section">Sesión</div>
                         <button class="menu-btn" onclick="document.getElementById('frmLogout').submit()">
@@ -1194,7 +1199,19 @@
                         <span class="list-item-nombre"><?= htmlspecialchars(strtoupper($u['nombre'])) ?></span>
                     </div>
                 <?php endforeach; ?>
+
+                <h3 style="margin-top:15px;">Ventas</h3>
+                <?php
+                $mesa2Users = array_filter($todosUs, fn($u) => $u['rol_id'] == 7);
+                foreach ($mesa2Users as $u): ?>
+                    <div class="list-item <?= htmlspecialchars($u['color']) ?>">
+                        <span class="list-item-nombre" style="color: white;">
+                            <?= htmlspecialchars(strtoupper($u['nombre'])) ?>
+                        </span>
+                    </div>
+                <?php endforeach; ?>
             </div>
+
         </div>
     </div>
 
@@ -1351,6 +1368,7 @@
                     <option value="apoyo">🔧 No disponible — Apoyo</option>
                     <option value="vacaciones">🏖 No disponible — Vacaciones</option>
                     <option value="mecanico">🔴 No disponible — Mecánico</option>
+                    <option value="no_se_presento">⚫ No se presentó</option>
                 </select>
 
                 <div id="tCamposFechas" class="campos-motivo-t" style="margin-top:10px;">
@@ -1384,6 +1402,30 @@
         </div>
     </div>
 
+
+    <!-- ══════════════ MODAL MATERIALES (rol 6) ══════════════ -->
+    <div class="modal-overlay" id="modalMateriales">
+        <div class="modal-box" style="width:460px;">
+            <div class="modal-header">
+                <h3>Registro de Materiales</h3>
+                <button class="modal-close" onclick="closeModal('modalMateriales')">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="feedback" id="materialesFeedback"></div>
+                <input type="hidden" id="mTicketId">
+
+                <!-- Los campos se agregarán aquí cuando se definan -->
+                <p style="font-size:12px;color:#888;text-align:center;padding:20px 0;">
+                    Hola
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('modalMateriales')">Cancelar</button>
+                <button class="btn btn-primary" onclick="guardarMateriales()">Guardar</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const ROL_ID = <?= (int) $rolId ?>;
         const USUARIO_ID = <?= (int) $usuario['id'] ?>;
@@ -1399,8 +1441,8 @@
         }
         document.addEventListener('click', () => document.getElementById('dropdownMenu').classList.remove('open'));
 
-        /* ── Lápiz técnico (rol 2) ──────────────────────────────── */
-        if (ROL_ID === 2) {
+        /* ── Lápiz técnico (rol 2 y 6) ──────────────────────────────── */
+        if (ROL_ID === 2 || ROL_ID === 6) {
             document.querySelectorAll('.btn-tecnico-status').forEach(b => b.style.display = 'inline-block');
         }
 
@@ -1532,6 +1574,14 @@
             }
 
             let footer = `<button class="btn btn-secondary" onclick="closeModal('modalOverlay')">Cerrar</button>`;
+            // Botón Materiales: sólo rol 6, sólo en tickets tipo cuadrado (rol agente != 2, tipo_ticket == 1)
+            // Determinar si el ticket es visualmente un cuadrado
+            const esCuadrado = parseInt(t.tipo_ticket || 1) !== 2 && (t.agente_rol === 2 || t.agente_rol === 6 || t.agente_rol === 7);
+
+            // Botón Materiales: sólo rol 6 y estrictamente en tickets cuadrados
+            if (ROL_ID === 6 && esCuadrado) {
+                footer += `<button class="btn btn-primary" onclick="abrirModalMateriales(${t.ticket_id})">Materiales</button>`;
+            }
             footer += `<button class="btn btn-danger" onclick="deleteTicket(${t.ticket_id})">Eliminar</button>`;
 
             if (!soloLectura) {
@@ -1861,14 +1911,14 @@
         }
 
         async function guardarCajaPuerto() {
-            const ticketId   = parseInt(document.getElementById('fTicketId').value);
+            const ticketId = parseInt(document.getElementById('fTicketId').value);
             if (!ticketId) return;
             const cajaPuerto = document.getElementById('fCajaPuerto').value.trim();
 
-            const res  = await fetch(`${BASE_URL}?action=ticket.updateCajaPuerto`, {
-                method : 'POST',
+            const res = await fetch(`${BASE_URL}?action=ticket.updateCajaPuerto`, {
+                method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body   : JSON.stringify({ ticket_id: ticketId, caja_puerto: cajaPuerto }),
+                body: JSON.stringify({ ticket_id: ticketId, caja_puerto: cajaPuerto }),
             });
             const json = await res.json();
             showFeedback(
@@ -1888,7 +1938,7 @@
             document.getElementById('tCamposFechas').classList.toggle('visible', motivo !== '');
             document.getElementById('tCamposHoras').classList.toggle('visible', motivo === 'mecanico');
             document.getElementById('tCamposDesc').style.display =
-                (motivo === 'mecanico' || motivo === 'apoyo') ? 'block' : 'none';
+                (motivo === 'mecanico' || motivo === 'apoyo' || motivo === 'no_se_presento') ? 'block' : 'none';
         }
 
         function poblarHorasGrid() {
@@ -1977,7 +2027,8 @@
                 fb.textContent = 'La fecha de inicio no puede ser posterior a la fecha final.'; fb.className = 'feedback error'; return;
             }
             if ((motivo === 'mecanico' || motivo === 'apoyo') && !payload.descripcion) {
-                fb.textContent = 'El motivo/descripción es obligatorio.'; fb.className = 'feedback error'; return;
+                fb.textContent = 'El motivo/descripción es obligatorio.';
+                fb.className = 'feedback error'; return;
             }
 
             if (motivo === 'mecanico') {
@@ -2015,7 +2066,7 @@
             const [y, m, d] = str.split('-');
             return `${d}/${m}/${y}`;
         }
-        ['modalOverlay', 'modalTecnico', 'modalReagendar'].forEach(id => {
+        ['modalOverlay', 'modalTecnico', 'modalReagendar', 'modalMateriales'].forEach(id => {
             document.getElementById(id).addEventListener('click', function (e) {
                 if (e.target === this) closeModal(id);
             });
@@ -2151,83 +2202,154 @@
             }, 500);
         })();
 
-        /* ══════════════════════════════════════════════════════════
-           LIVE UPDATES (SIN RECARGAR PÁGINA Y SIN TOAST)
-        ══════════════════════════════════════════════════════════ */
+        // ── syncTablero se mantiene para actualizaciones inmediatas locales ──
         async function syncTablero() {
-            const indicator = document.getElementById('liveIndicator');
-            if (!indicator) return;
-
             try {
-                indicator.classList.add('syncing');
-                const url = new URL(window.location.href);
-                url.searchParams.set('_t', Date.now()); // Previene caché
-
-                const res = await fetch(url.toString(), { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
-                if (!res.ok) throw new Error('Network response was not ok');
-                const html = await res.text();
-
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(html, 'text/html');
-
-                // --- 1. Sincronizar el cuerpo de la tabla (Tickets) ---
-                const oldTbody = document.querySelector('table tbody');
-                const newTbody = doc.querySelector('table tbody');
-                if (oldTbody && newTbody) {
-                    const oldCells = oldTbody.querySelectorAll('td.cell-ticket');
-                    const newCells = newTbody.querySelectorAll('td.cell-ticket');
-
-                    newCells.forEach((newCell, index) => {
-                        const oldCell = oldCells[index];
-                        if (!oldCell) return;
-
-                        if (newCell.innerHTML !== oldCell.innerHTML || newCell.className !== oldCell.className) {
-                            oldCell.innerHTML = newCell.innerHTML;
-                            oldCell.className = newCell.className;
-
-                            if (newCell.hasAttribute('data-ticket-id')) {
-                                oldCell.setAttribute('data-ticket-id', newCell.getAttribute('data-ticket-id'));
-                            } else {
-                                oldCell.removeAttribute('data-ticket-id');
-                            }
-                            oldCell.setAttribute('data-can-create', newCell.getAttribute('data-can-create'));
-
-                            oldCell.classList.remove('cell-updated');
-                            void oldCell.offsetWidth;
-                            oldCell.classList.add('cell-updated');
-                        }
-                    });
-                }
-
-                // --- 2. Sincronizar el encabezado de la tabla (Estados/Motivos técnicos) ---
-                const oldThead = document.querySelector('table thead');
-                const newThead = doc.querySelector('table thead');
-                if (oldThead && newThead && oldThead.innerHTML !== newThead.innerHTML) {
-                    oldThead.innerHTML = newThead.innerHTML;
-                }
-
-                // --- 3. Sincronizar las listas inferiores ---
-                const oldLists = document.querySelector('.staff-lists');
-                const newLists = doc.querySelector('.staff-lists');
-                if (oldLists && newLists && oldLists.innerHTML !== newLists.innerHTML) {
-                    oldLists.innerHTML = newLists.innerHTML;
-                    if (ROL_ID === 2) {
-                        document.querySelectorAll('.btn-tecnico-status').forEach(b => b.style.display = 'inline-block');
-                    }
-                }
-
-                indicator.classList.remove('syncing', 'error');
+                const res = await fetch(
+                    `${BASE_URL}?action=tablero.estado&fecha=${FECHA_TABLERO}&_t=${Date.now()}`,
+                    { cache: 'no-store' }
+                );
+                const json = await res.json();
+                if (json.success && json.changed) aplicarCambios(json.tickets);
             } catch (e) {
                 console.error('Error en syncTablero:', e);
-                indicator.classList.remove('syncing');
-                indicator.classList.add('error');
             }
         }
 
+        // ── Lógica de actualización de celdas ───────────────────────────
+        function aplicarCambios(tickets) {
+            Object.entries(tickets).forEach(([key, t]) => {
+                const [tecId, horId] = key.split('_');
+                const cell = document.querySelector(
+                    `td[data-tecnico-id="${tecId}"][data-horario-id="${horId}"]`
+                );
+                if (!cell || cell.classList.contains('cell-nodisponible')) return;
+
+                let newClass = 'cell-ticket occupied';
+                if (t.estado === 'terminado') newClass += ' estado-terminado';
+                else if (t.total_llamadas >= 3) newClass += ' estado-rojo';
+                else if (t.total_llamadas === 2) newClass += ' estado-segunda-llamada';
+                else if (t.total_llamadas === 1) newClass += ' estado-primera-llamada';
+
+                const colorClass = t.agente_color || 'bg-gray';
+                let iconHtml;
+                if (t.tipo_ticket === 2) {
+                    const colorHex = {
+                        'bg-green': '#92D050', 'bg-yellow': '#FFFF00', 'bg-pink': '#ff69b4',
+                        'bg-peach': '#F1A983', 'bg-blue': '#00B0F0', 'bg-orange': '#FFC000',
+                        'bg-gray': '#F2CEEF', 'bg-violet': '#D86DCD', 'bg-lightblue': '#DAE9F8',
+                        'bg-m-blue': '#5bc0de', 'bg-bluemarco': '#94DCF8', 'bg-purple': '#D86DCD',
+                        'bg-cobranza': '#F4320B',
+                    };
+                    const fill = colorHex[colorClass] || '#F2CEEF';
+                    iconHtml = `<svg width="24" height="24" viewBox="0 0 24 24" style="display:block;margin:auto;">
+                <path d="M12 2L2 22h20L12 2z" fill="${fill}" stroke="white" stroke-width="1"/>
+            </svg>`;
+                } else {
+                    const shape = (t.agente_rol === 2 || t.agente_rol === 6 || t.agente_rol === 7) ? 'square' : 'circle';
+                    iconHtml = `<span class="${shape} ${colorClass}"></span>`;
+                }
+
+                const calidadHtml = parseInt(t.calidad_hecha) === 1 ? '<span class="calidad-check">✔</span>' : '';
+                const newInner = `<div class="icon-wrap">${iconHtml}</div>${calidadHtml}`;
+
+                if (cell.className !== newClass || cell.innerHTML !== newInner) {
+                    cell.className = newClass;
+                    cell.innerHTML = newInner;
+                    cell.setAttribute('data-ticket-id', t.ticket_id);
+                    cell.setAttribute('data-can-create', '0');
+                    cell.classList.remove('cell-updated');
+                    void cell.offsetWidth;
+                    cell.classList.add('cell-updated');
+                }
+            });
+
+            // Limpiar celdas de tickets eliminados
+            document.querySelectorAll('td.cell-ticket.occupied').forEach(cell => {
+                const key = `${cell.dataset.tecnicoId}_${cell.dataset.horarioId}`;
+                if (!tickets[key]) {
+                    cell.className = 'cell-ticket';
+                    cell.innerHTML = '';
+                    cell.removeAttribute('data-ticket-id');
+                    cell.setAttribute('data-can-create', '<?= $canCreate ? '1' : '0' ?>');
+                }
+            });
+        }
+
+        // ── WebSocket ────────────────────────────────────────────────────
+        function iniciarWebSocket() {
+            const url = `wss://${location.host.split(':')[0]}:3001`;
+            let ws, reconnectTimer;
+
+            function connect() {
+                ws = new WebSocket(url);
+
+                ws.onopen = () => {
+                    console.log('WebSocket conectado');
+                    clearTimeout(reconnectTimer);
+                };
+
+                ws.onmessage = (e) => {
+                    const msg = JSON.parse(e.data);
+
+                    if (msg.event === 'ticket.changed') {
+                        if (!msg.payload.fecha || msg.payload.fecha === FECHA_TABLERO) {
+                            syncTablero();
+                        }
+                    }
+
+                    if (msg.event === 'tecnico.changed') {
+                        location.reload();
+                    }
+                };
+
+                ws.onclose = () => {
+                    console.warn('WebSocket desconectado, reintentando en 5s...');
+                    reconnectTimer = setTimeout(connect, 5000);
+                };
+
+                ws.onerror = () => ws.close();
+            }
+
+            connect();
+        }
+
+        iniciarWebSocket();
+        inicializarNotificaciones();
         // Iniciar sondeo silencioso de actualización cada 15 segundos
-        setInterval(syncTablero, 15000);
+        // setInterval(syncTablero, 7000);
 
         inicializarNotificaciones();
+
+        /* ══════════════════════════════════════════════════════════
+        MODAL MATERIALES (rol 6)
+        ══════════════════════════════════════════════════════════ */
+        function abrirModalMateriales(ticketId) {
+            document.getElementById('mTicketId').value = ticketId;
+            const fb = document.getElementById('materialesFeedback');
+            fb.className = 'feedback'; fb.textContent = '';
+            openModal('modalMateriales');
+        }
+
+        async function guardarMateriales() {
+            const ticketId = parseInt(document.getElementById('mTicketId').value);
+            // Aquí construirás el payload con los campos que se definan
+            const payload = { ticket_id: ticketId };
+
+            const res = await fetch(`${BASE_URL}?action=materiales.store`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            });
+            const json = await res.json();
+            const fb = document.getElementById('materialesFeedback');
+            if (json.success) {
+                fb.textContent = '✓ Guardado correctamente.'; fb.className = 'feedback success';
+                setTimeout(() => closeModal('modalMateriales'), 1200);
+            } else {
+                fb.textContent = json.message || 'Error al guardar.'; fb.className = 'feedback error';
+            }
+        }
     </script>
 </body>
 

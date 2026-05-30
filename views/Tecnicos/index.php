@@ -7,6 +7,8 @@
     <title>Gestión de Técnicos</title>
     <link rel="stylesheet" href="<?= BASE_URL ?>public/main.css">
     <style>
+        .badge-no_se_presento { background: #f3e5f5; color: #4a148c; }
+        .bloqueo-card.motivo-no_se_presento { border-left: 3px solid #7b1fa2; }
         .topbar { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
         .topbar h1 { margin:0; font-size:18px; }
         .topbar-right { display:flex; align-items:center; gap:10px; font-size:12px; }

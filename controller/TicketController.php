@@ -6,7 +6,7 @@ class TicketController
     {
         $this->requireJson();
         $usuario = $_SESSION['usuario'];
-        if (!in_array($usuario['rol_id'], [1, 2, 3]))
+        if (!in_array($usuario['rol_id'], [1, 2, 3, 6, 7]))
             $this->jsonError('Sin permisos.', 403);
 
         $body = $this->jsonBody();
@@ -28,7 +28,8 @@ class TicketController
 
         // Validar el tipo de ticket asegurando que si no es el usuario 2, forzosamente sea 1.
         $tipo_ticket = isset($body['tipo_ticket']) ? (int) $body['tipo_ticket'] : 1;
-        if ($tipo_ticket === 2 && (int) $usuario['id'] !== 2) {
+        $puedeCrearTipo2 = ((int) $usuario['id'] === 2 || (int) $usuario['rol_id'] === 6 || (int) $usuario['rol_id'] === 7);
+        if ($tipo_ticket === 2 && !$puedeCrearTipo2) {
             $tipo_ticket = 1;
         }
         $caja_puerto = $body['caja_puerto'] ?? '';
@@ -46,6 +47,21 @@ class TicketController
             'tipo_ticket' => $tipo_ticket,
             'caja_puerto' => $caja_puerto,
         ]);
+        if ($tipo_ticket === 2) {
+            $db = Database::getInstance()->getConnection();
+            $stmt = $db->prepare("
+            INSERT INTO tm_ticket_mesa (ticket_id, num_ticket, caja_puerto)
+            VALUES (:tid, :nt, :cp)
+            ON DUPLICATE KEY UPDATE num_ticket = VALUES(num_ticket), caja_puerto = VALUES(caja_puerto)
+        ");
+            $stmt->execute([
+                ':tid' => $id,
+                ':nt' => $body['ticket_num'],
+                ':cp' => $body['caja_puerto'] ?? '',
+            ]);
+        }
+
+        WsNotifier::send('ticket.changed', ['fecha' => $body['fecha']]);
         $this->jsonSuccess(['ticket_id' => $id, 'rol_id' => $usuario['rol_id']]);
     }
 
@@ -104,6 +120,20 @@ class TicketController
             'tipo_ticket' => $tipo_ticket,
             'caja_puerto' => $caja_puerto,
         ]);
+        if ($tipo_ticket === 2) {
+            $db = Database::getInstance()->getConnection();
+            $stmt = $db->prepare("
+            INSERT INTO tm_ticket_mesa (ticket_id, num_ticket, caja_puerto)
+            VALUES (:tid, :nt, :cp)
+            ON DUPLICATE KEY UPDATE num_ticket = VALUES(num_ticket), caja_puerto = VALUES(caja_puerto)
+        ");
+            $stmt->execute([
+                ':tid' => $id,
+                ':nt' => $body['ticket_num'],
+                ':cp' => $body['caja_puerto'] ?? '',
+            ]);
+        }
+        WsNotifier::send('ticket.changed', ['fecha' => $ticket['fecha']]);
         $this->jsonSuccess(['updated' => true]);
     }
 
@@ -121,7 +151,7 @@ class TicketController
 
         $body = $this->jsonBody();
         $id = (int) ($body['ticket_id'] ?? 0);
-        $estado = $body['estado'] ?? null; // 'terminado' | null
+        $estado = $body['estado'] ?? null;
 
         if (!$id)
             $this->jsonError('ID de ticket inválido.', 422);
@@ -129,10 +159,12 @@ class TicketController
             $this->jsonError('Estado inválido.', 422);
 
         $model = new TicketModel();
-        if (!$model->findById($id))
+        $ticket = $model->findById($id); // <- guardar el resultado
+        if (!$ticket)
             $this->jsonError('Ticket no encontrado.', 404);
 
         $model->setEstado($id, $estado);
+        WsNotifier::send('ticket.changed', ['fecha' => $ticket['fecha']]); // <- ahora sí existe
         $this->jsonSuccess(['estado' => $estado]);
     }
 
@@ -187,6 +219,7 @@ class TicketController
                 $this->jsonError('Ese horario ya está ocupado.', 409);
 
             $model->reschedule($ticketId, $newFecha, $newHorarioId, $newTecnicoId);
+            WsNotifier::send('ticket.changed', ['fecha' => $ticket['fecha']]);
             $horarioModel = new HorarioModel();
             $horario = $horarioModel->findById($newHorarioId);
             $this->jsonSuccess([
@@ -240,6 +273,7 @@ class TicketController
 
         $db = Database::getInstance()->getConnection();
         $stmt = $db->prepare("UPDATE tm_ticket SET caja_puerto = :cp WHERE ticket_id = :id");
+        WsNotifier::send('ticket.changed', ['fecha' => date('Y-m-d')]);
         $stmt->execute([':cp' => $cajaPuerto, ':id' => $id]);
 
         $this->jsonSuccess(['updated' => true]);
@@ -249,7 +283,7 @@ class TicketController
     {
         $this->requireJson();
         $usuario = $_SESSION['usuario'];
-        if (!in_array($usuario['rol_id'], [1, 2, 3, 4]))
+        if (!in_array($usuario['rol_id'], [1, 2, 3, 4, 6, 7]))
             $this->jsonError('Sin permisos.', 403);
 
         $body = $this->jsonBody();
@@ -270,6 +304,7 @@ class TicketController
             trim($body['respuesta_cliente'] ?? ''),
             (int) ($body['es_calidad'] ?? 0)          // ← nuevo campo
         );
+        WsNotifier::send('ticket.changed', ['fecha' => date('Y-m-d')]);
         $this->jsonSuccess(['saved' => true]);
     }
 
@@ -278,7 +313,7 @@ class TicketController
         $this->requireJson();
         $usuario = $_SESSION['usuario'];
 
-        if (!in_array($usuario['rol_id'], [1, 2, 3, 4])) {
+        if (!in_array($usuario['rol_id'], [1, 2, 3, 4, 6, 7])) {
             $this->jsonError('Sin permisos para eliminar tickets.', 403);
         }
 
@@ -293,6 +328,7 @@ class TicketController
             $this->jsonError('Ticket no encontrado.', 404);
 
         $model->delete($id);
+        WsNotifier::send('ticket.changed', ['fecha' => $ticket['fecha']]);
         $this->jsonSuccess(['deleted' => true]);
     }
 
@@ -300,7 +336,7 @@ class TicketController
     {
         header('Content-Type: application/json; charset=utf-8');
         $usuario = $_SESSION['usuario'];
-        if (!in_array($usuario['rol_id'], [1, 2, 3, 4, 5]))
+        if (!in_array($usuario['rol_id'], [1, 2, 3, 4, 5, 6, 7]))
             $this->jsonError('Sin permisos.', 403);
 
         $q = trim($_GET['q'] ?? '');
