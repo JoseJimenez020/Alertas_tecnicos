@@ -1,6 +1,7 @@
 <?php
 define('BASE_PATH', __DIR__);
 define('BASE_URL', 'http://alertas.local.com/');
+//define('BASE_URL', 'https://alertas.fast-net.net/');
 
 require_once BASE_PATH . '/config/Security.php';
 Security::configureSession();
@@ -28,6 +29,9 @@ require_once BASE_PATH . '/controller/TecnicoController.php';
 require_once BASE_PATH . '/controller/HorarioController.php';
 require_once BASE_PATH . '/controller/NotifController.php';
 require_once BASE_PATH . '/controller/BloqueController.php';
+require_once BASE_PATH . '/models/MaterialModel.php';
+require_once BASE_PATH . '/controller/MaterialController.php';
+
 
 $action = $_GET['action'] ?? 'tablero';
 $ip = Security::clientIp();
@@ -58,6 +62,12 @@ switch ($action) {
         (new TicketController())->updateCajaPuerto();
         break;
 
+    case 'almacen':
+        (new MaterialController())->lista();
+        break;
+    case 'materiales.get':
+        (new MaterialController())->get();
+        break;
     case 'materiales.store':
         (new MaterialController())->store();
         break;

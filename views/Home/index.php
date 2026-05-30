@@ -998,8 +998,8 @@
                             <a href="?action=admin.usuarios">👥 Gestión de Usuarios</a>
                             <a href="?action=admin.reporte">📊 Reporte de Tickets</a>
                         <?php endif; ?>
-                        <?php if ($rolId === 6): ?>
-                            <a href="?action=admin.usuarios">👥 Materiales</a>
+                        <?php if (in_array($rolId, [4, 5, 6])): ?>
+                            <a href="?action=almacen">📦 Almacén</a>
                         <?php endif; ?>
                         <div class="menu-section">Sesión</div>
                         <button class="menu-btn" onclick="document.getElementById('frmLogout').submit()">
@@ -1405,23 +1405,44 @@
 
     <!-- ══════════════ MODAL MATERIALES (rol 6) ══════════════ -->
     <div class="modal-overlay" id="modalMateriales">
-        <div class="modal-box" style="width:460px;">
+        <div class="modal-box" style="width:500px;">
             <div class="modal-header">
-                <h3>Registro de Materiales</h3>
+                <h3>📦 Registro de Materiales</h3>
                 <button class="modal-close" onclick="closeModal('modalMateriales')">×</button>
             </div>
             <div class="modal-body">
                 <div class="feedback" id="materialesFeedback"></div>
                 <input type="hidden" id="mTicketId">
 
-                <!-- Los campos se agregarán aquí cuando se definan -->
-                <p style="font-size:12px;color:#888;text-align:center;padding:20px 0;">
-                    Hola
-                </p>
+                <div id="materialesLoading" style="text-align:center;padding:20px;color:#888;font-size:12px;">
+                    Cargando materiales...
+                </div>
+
+                <div id="materialesContenido" style="display:none;">
+                    <p style="font-size:11px;color:#555;margin:0 0 12px;">
+                        Escribe la cantidad utilizada de cada material (ej: <em>2 pzas</em>, <em>3 mt</em>, <em>500
+                            g</em>).
+                        Deja vacío si no se utilizó.
+                    </p>
+                    <table style="width:100%;border-collapse:collapse;" id="materialesTabla">
+                        <thead>
+                            <tr>
+                                <th style="background:#1a4d6d;color:#fff;padding:6px 9px;
+                                       text-align:left;font-size:11px;">Material</th>
+                                <th style="background:#1a4d6d;color:#fff;padding:6px 9px;
+                                       text-align:left;font-size:11px;width:160px;">Cantidad utilizada</th>
+                            </tr>
+                        </thead>
+                        <tbody id="materialesTbody"></tbody>
+                    </table>
+                </div>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeModal('modalMateriales')">Cancelar</button>
-                <button class="btn btn-primary" onclick="guardarMateriales()">Guardar</button>
+                <button class="btn btn-primary" id="btnGuardarMateriales" onclick="guardarMateriales()"
+                    style="display:none;">
+                    Guardar
+                </button>
             </div>
         </div>
     </div>
@@ -2324,31 +2345,107 @@
         /* ══════════════════════════════════════════════════════════
         MODAL MATERIALES (rol 6)
         ══════════════════════════════════════════════════════════ */
-        function abrirModalMateriales(ticketId) {
+        async function abrirModalMateriales(ticketId) {
             document.getElementById('mTicketId').value = ticketId;
+
+            // Reset visual
             const fb = document.getElementById('materialesFeedback');
             fb.className = 'feedback'; fb.textContent = '';
+
+            document.getElementById('materialesLoading').style.display = 'block';
+            document.getElementById('materialesContenido').style.display = 'none';
+            document.getElementById('btnGuardarMateriales').style.display = 'none';
+
             openModal('modalMateriales');
+
+            try {
+                const res = await fetch(`${BASE_URL}?action=materiales.get&ticket_id=${ticketId}`, { cache: 'no-store' });
+                const json = await res.json();
+
+                if (!json.success) {
+                    document.getElementById('materialesLoading').textContent = '✗ No se pudo cargar el catálogo.';
+                    return;
+                }
+
+                renderMaterialesTabla(json.data.items);
+
+                document.getElementById('materialesLoading').style.display = 'none';
+                document.getElementById('materialesContenido').style.display = 'block';
+                document.getElementById('btnGuardarMateriales').style.display = 'inline-block';
+
+            } catch (e) {
+                document.getElementById('materialesLoading').textContent = 'Error de conexión.';
+            }
+        }
+
+        function renderMaterialesTabla(items) {
+            const tbody = document.getElementById('materialesTbody');
+            tbody.innerHTML = items.map((item, idx) => {
+                const tieneCantidad = item.cantidad !== '';
+                const rowBg = tieneCantidad ? 'background:#f0fdf4;' : '';
+                return `
+        <tr id="mat-row-${idx}" style="${rowBg}">
+            <td style="border:1px solid #ddd;padding:5px 9px;font-size:12px;">
+                ${escHtmlMat(item.material_nombre)}
+            </td>
+            <td style="border:1px solid #ddd;padding:4px 6px;">
+                <input
+                    type="text"
+                    data-material-id="${item.material_id}"
+                    data-row-idx="${idx}"
+                    value="${escHtmlMat(item.cantidad)}"
+                    placeholder="Ej: 2 pzas"
+                    maxlength="200"
+                    style="width:100%;box-sizing:border-box;padding:5px 7px;
+                           border:1px solid #ccc;font-size:12px;font-family:Arial,sans-serif;"
+                    oninput="resaltarFila(${idx}, this.value)">
+            </td>
+        </tr>`;
+            }).join('');
+        }
+
+        function resaltarFila(idx, valor) {
+            const row = document.getElementById(`mat-row-${idx}`);
+            if (row) row.style.background = valor.trim() !== '' ? '#f0fdf4' : '';
         }
 
         async function guardarMateriales() {
             const ticketId = parseInt(document.getElementById('mTicketId').value);
-            // Aquí construirás el payload con los campos que se definan
-            const payload = { ticket_id: ticketId };
+            if (!ticketId) return;
+
+            // Recolectar todos los inputs de la tabla
+            const inputs = document.querySelectorAll('#materialesTbody input[data-material-id]');
+            const materiales = Array.from(inputs).map(inp => ({
+                material_id: parseInt(inp.dataset.materialId),
+                cantidad: inp.value.trim(),
+            }));
+
+            const fb = document.getElementById('materialesFeedback');
+            fb.textContent = ''; fb.className = 'feedback';
 
             const res = await fetch(`${BASE_URL}?action=materiales.store`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload),
+                body: JSON.stringify({ ticket_id: ticketId, materiales }),
             });
             const json = await res.json();
-            const fb = document.getElementById('materialesFeedback');
+
             if (json.success) {
-                fb.textContent = '✓ Guardado correctamente.'; fb.className = 'feedback success';
+                fb.textContent = '✓ Materiales guardados correctamente.';
+                fb.className = 'feedback success';
                 setTimeout(() => closeModal('modalMateriales'), 1200);
             } else {
-                fb.textContent = json.message || 'Error al guardar.'; fb.className = 'feedback error';
+                fb.textContent = json.message || 'Error al guardar.';
+                fb.className = 'feedback error';
             }
+        }
+
+        function escHtmlMat(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
         }
     </script>
 </body>
