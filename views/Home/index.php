@@ -896,7 +896,7 @@
                 'bg-purple' => '#D86DCD',
                 'bg-cajera' => '#79308C',
                 'bg-cobranza' => '#F4320B',
-                'bg-gestor' =>  '#C49C13'
+                'bg-gestor' => '#C49C13'
             ];
             $fill = $colorHex[$colorClass] ?? '#F2CEEF';
 
@@ -1208,6 +1208,17 @@
                 <h3 style="margin-top:15px;">Ventas</h3>
                 <?php
                 $mesa2Users = array_filter($todosUs, fn($u) => $u['rol_id'] == 7);
+                foreach ($mesa2Users as $u): ?>
+                    <div class="list-item <?= htmlspecialchars($u['color']) ?>">
+                        <span class="list-item-nombre" style="color: white;">
+                            <?= htmlspecialchars(strtoupper($u['nombre'])) ?>
+                        </span>
+                    </div>
+                <?php endforeach; ?>
+
+                <h3 style="margin-top:15px;">Gestor</h3>
+                <?php
+                $mesa2Users = array_filter($todosUs, fn($u) => $u['rol_id'] == 8);
                 foreach ($mesa2Users as $u): ?>
                     <div class="list-item <?= htmlspecialchars($u['color']) ?>">
                         <span class="list-item-nombre" style="color: white;">
