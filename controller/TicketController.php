@@ -6,7 +6,7 @@ class TicketController
     {
         $this->requireJson();
         $usuario = $_SESSION['usuario'];
-        if (!in_array($usuario['rol_id'], [1, 2, 3, 6, 7]))
+        if (!in_array($usuario['rol_id'], [1, 2, 3, 6, 7, 8]))
             $this->jsonError('Sin permisos.', 403);
 
         $body = $this->jsonBody();
@@ -30,6 +30,11 @@ class TicketController
         $tipo_ticket = isset($body['tipo_ticket']) ? (int) $body['tipo_ticket'] : 1;
         $puedeCrearTipo2 = ((int) $usuario['id'] === 2 || (int) $usuario['rol_id'] === 6 || (int) $usuario['rol_id'] === 7);
         if ($tipo_ticket === 2 && !$puedeCrearTipo2) {
+            $tipo_ticket = 1;
+        }
+        // Gestor (rol 8) puede crear tickets tipo "Instalación" (cuadrado)
+        $puedeCrearTipo3 = ((int) $usuario['rol_id'] === 8);
+        if ($tipo_ticket === 3 && !$puedeCrearTipo3) {
             $tipo_ticket = 1;
         }
         $caja_puerto = $body['caja_puerto'] ?? '';
@@ -313,7 +318,7 @@ class TicketController
         $this->requireJson();
         $usuario = $_SESSION['usuario'];
 
-        if (!in_array($usuario['rol_id'], [1, 2, 3, 4, 6, 7])) {
+        if (!in_array($usuario['rol_id'], [1, 2, 3, 4, 6, 7, 8])) {
             $this->jsonError('Sin permisos para eliminar tickets.', 403);
         }
 

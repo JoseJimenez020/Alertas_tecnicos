@@ -896,6 +896,7 @@
                 'bg-purple' => '#D86DCD',
                 'bg-cajera' => '#79308C',
                 'bg-cobranza' => '#F4320B',
+                'bg-gestor' =>  '#C49C13'
             ];
             $fill = $colorHex[$colorClass] ?? '#F2CEEF';
 
@@ -905,7 +906,7 @@
         </svg>';
         }
 
-        $shape = ($rolId === 2 || $rolId === 6 || $rolId === 7) ? 'square' : 'circle';
+        $shape = ($tipo_ticket === 3 || $rolId === 2 || $rolId === 6 || $rolId === 7) ? 'square' : 'circle';
         return '<span class="' . $shape . ' ' . $colorClass . '"></span>';
     }
 
@@ -951,7 +952,7 @@
     }
 
     $rolId = (int) $usuario['rol_id'];
-    $canCreate = in_array($rolId, [1, 2, 3, 4, 6, 7]);
+    $canCreate = in_array($rolId, [1, 2, 3, 4, 6, 7, 8]);
     $rolesNombres = ['', 'Call Center', 'Mesa de Control', 'Supervisor CC', 'Administrador', 'Encargado de Zona', 'Cajera', 'Cobranza'];
     $fechaHoy = date('Y-m-d');
     ?>
@@ -961,9 +962,9 @@
         <div class="topbar">
             <h1>Incidentes de Clientes Residenciales</h1>
             <div class="topbar-right">
-                <!-- <div id="liveIndicator" title="Actualización en vivo de tabla">
-                <div class="live-dot"></div> En vivo
-            </div> -->
+                <!--<div id="liveIndicator" title="Actualización en vivo de tabla">
+                        <div class="live-dot"></div> En vivo
+                    </div> -->
                 <span>👤 <?= htmlspecialchars($usuario['nombre']) ?>
                     (<?= $rolesNombres[$rolId] ?? 'Rol ' . $rolId ?>)
                 </span>
@@ -989,9 +990,13 @@
                     <div class="dropdown-menu" id="dropdownMenu">
                         <div class="menu-section">Tablero</div>
                         <a href="?action=tablero">📋 Tablero de hoy</a>
-                        <?php if (in_array($rolId, [2, 4])): ?>
+                        <?php if (in_array($rolId, [2, 4, 8])): ?>
                             <div class="menu-section">Gestión</div>
+                        <?php endif; ?>
+                        <?php if (in_array($rolId, [2, 4])): ?>
                             <a href="?action=horarios.panel">🕐 Gestión de Horarios</a>
+                        <?php endif; ?>
+                        <?php if (in_array($rolId, [2, 4, 8])): ?>
                             <a href="?action=tecnicos.panel">⚙ Gestión de Técnicos</a>
                         <?php endif; ?>
                         <?php if ($rolId === 4): ?>
@@ -1244,6 +1249,12 @@
                         <option value="1">Ticket</option>
                         <option value="2">Retiro de equipo</option>
                     </select>
+                <?php elseif ($rolId === 8): ?>
+                    <label>Tipo de Ticket</label>
+                    <select id="fTipoTicket" onchange="toggleCamposEspeciales()">
+                        <option value="1">Ticket</option>
+                        <option value="3">Instalación</option>
+                    </select>
                 <?php else: ?>
                     <!-- Oculto para todos los demás usuarios para que envíen el valor por defecto -->
                     <input type="hidden" id="fTipoTicket" value="1">
@@ -1463,7 +1474,7 @@
         document.addEventListener('click', () => document.getElementById('dropdownMenu').classList.remove('open'));
 
         /* ── Lápiz técnico (rol 2 y 6) ──────────────────────────────── */
-        if (ROL_ID === 2 || ROL_ID === 6) {
+        if (ROL_ID === 2 || ROL_ID === 6 || ROL_ID === 8) {
             document.querySelectorAll('.btn-tecnico-status').forEach(b => b.style.display = 'inline-block');
         }
 
@@ -1957,7 +1968,7 @@
         function onTablMotivoChange() {
             const motivo = document.getElementById('tMotivo').value;
             document.getElementById('tCamposFechas').classList.toggle('visible', motivo !== '');
-            document.getElementById('tCamposHoras').classList.toggle('visible', motivo === 'mecanico');
+            document.getElementById('tCamposHoras').classList.toggle('visible', motivo === 'mecanico' || motivo === 'apoyo');
             document.getElementById('tCamposDesc').style.display =
                 (motivo === 'mecanico' || motivo === 'apoyo' || motivo === 'no_se_presento') ? 'block' : 'none';
         }
@@ -1988,7 +1999,7 @@
             poblarHorasGrid();
 
             const horasVal = btn.dataset.horas;
-            if (btn.dataset.motivo === 'mecanico' && horasVal) {
+            if ((btn.dataset.motivo === 'mecanico' || btn.dataset.motivo === 'apoyo') && horasVal) {
                 try {
                     const horasIds = JSON.parse(horasVal);
                     if (Array.isArray(horasIds)) {
@@ -2052,7 +2063,7 @@
                 fb.className = 'feedback error'; return;
             }
 
-            if (motivo === 'mecanico') {
+            if (motivo === 'mecanico' || motivo === 'apoyo') {
                 const selectedLabels = document.querySelectorAll('#tHorasGrid .hora-check-sm.selected');
                 if (selectedLabels.length === 0) {
                     fb.textContent = 'Selecciona al menos una hora para bloquear.';
@@ -2267,7 +2278,7 @@
                 <path d="M12 2L2 22h20L12 2z" fill="${fill}" stroke="white" stroke-width="1"/>
             </svg>`;
                 } else {
-                    const shape = (t.agente_rol === 2 || t.agente_rol === 6 || t.agente_rol === 7) ? 'square' : 'circle';
+                    const shape = (t.tipo_ticket === 3 || t.agente_rol === 2 || t.agente_rol === 6 || t.agente_rol === 7) ? 'square' : 'circle';
                     iconHtml = `<span class="${shape} ${colorClass}"></span>`;
                 }
 

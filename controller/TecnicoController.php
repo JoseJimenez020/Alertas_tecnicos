@@ -112,7 +112,7 @@ class TecnicoController
             $horasIds = null; // null = bloqueo total del día (todas las horas)
             $descripcion = trim($body['descripcion'] ?? '');
 
-            if ($motivoNorm === 'mecanico') {
+            if ($motivoNorm === 'mecanico' || $motivoNorm === 'apoyo') {
                 // El frontend envía null cuando seleccionó "Todas las horas",
                 // o un array de IDs cuando seleccionó horas específicas.
                 // array_key_exists distingue entre clave ausente y valor null.
@@ -125,10 +125,7 @@ class TecnicoController
                 }
                 // Si horas_ids es null o la clave no existe → $horasIds queda null (todas)
                 if (empty($descripcion))
-                    $this->jsonError('El motivo es obligatorio para mecánico.', 422);
-            } elseif ($motivoNorm === 'apoyo') {
-                if (empty($descripcion))
-                    $this->jsonError('El motivo es obligatorio para apoyo.', 422);
+                    $this->jsonError('El motivo es obligatorio', 422);
             } elseif ($motivoNorm === 'no_se_presento') {
                 // No requiere descripción obligatoria, pero se permite
             }
@@ -169,7 +166,7 @@ class TecnicoController
     private function requireMesa(): void
     {
         $rol = (int) $_SESSION['usuario']['rol_id'];
-        if (!in_array($rol, [2, 4, 6])) {
+        if (!in_array($rol, [2, 4, 6, 8])) {
             http_response_code(403);
             die('Acceso denegado.');
         }

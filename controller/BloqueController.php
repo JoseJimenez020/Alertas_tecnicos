@@ -118,7 +118,7 @@ class BloqueController
         if ($body['fecha_inicio'] > $body['fecha_fin']) {
             $this->jsonError('La fecha de inicio no puede ser posterior a la fecha final.', 422);
         }
-        if ($body['motivo'] === 'mecanico' && empty($body['horas_ids'])) {
+        if (in_array($body['motivo'], ['mecanico', 'apoyo'], true) && empty($body['horas_ids'])) {
             $this->jsonError('Debes seleccionar al menos una hora para bloquear.', 422);
         }
     }
@@ -137,7 +137,7 @@ class BloqueController
     private function requireMesa(): void
     {
         $rol = (int) $_SESSION['usuario']['rol_id'];
-        if (!in_array($rol, [2, 4, 6])) {
+        if (!in_array($rol, [2, 4, 6, 8])) {
             http_response_code(403);
             die(json_encode(['success' => false, 'message' => 'Acceso denegado.']));
         }
