@@ -896,7 +896,7 @@
                 'bg-purple' => '#D86DCD',
                 'bg-cajera' => '#79308C',
                 'bg-cobranza' => '#F4320B',
-                'bg-gestor' => '#C49C13'
+                'bg-gestor' => '#73F527'
             ];
             $fill = $colorHex[$colorClass] ?? '#F2CEEF';
 
@@ -952,8 +952,8 @@
     }
 
     $rolId = (int) $usuario['rol_id'];
-    $canCreate = in_array($rolId, [1, 2, 3, 4, 6, 7, 8]);
-    $rolesNombres = ['', 'Call Center', 'Mesa de Control', 'Supervisor CC', 'Administrador', 'Encargado de Zona', 'Cajera', 'Cobranza'];
+    $canCreate = in_array($rolId, [1, 2, 3, 4, 6, 7, 8, 9]);
+    $rolesNombres = ['', 'Call Center', 'Mesa de Control', 'Supervisor CC', 'Administrador', 'Encargado de Zona', 'Cajera', 'Cobranza', 'Gestor', 'Recuperación de clientes'];
     $fechaHoy = date('Y-m-d');
     ?>
     <div class="container">
@@ -1254,10 +1254,9 @@
                 <label>Descripción del Incidente</label>
                 <textarea id="fDescripcion" maxlength="255" placeholder="Describe el incidente..."></textarea>
 
-                <?php if ((int) $usuario['id'] === 2): ?>
+                <?php if ($rolId === 9): ?>
                     <label>Tipo de Ticket</label>
                     <select id="fTipoTicket" onchange="toggleCamposEspeciales()">
-                        <option value="1">Ticket</option>
                         <option value="2">Retiro de equipo</option>
                     </select>
                 <?php elseif ($rolId === 8): ?>
@@ -1543,7 +1542,7 @@
             document.getElementById('fCajaPuerto').value = t.caja_puerto || '';
             toggleCamposEspeciales();
             const btnCaja = document.getElementById('btnGuardarCajaPuerto');
-            btnCaja.style.display = (USUARIO_ID === 2 && parseInt(t.tipo_ticket) === 2) ? 'block' : 'none';
+            btnCaja.style.display = (ROL_ID === 9 && parseInt(t.tipo_ticket) === 2) ? 'block' : 'none';
             document.getElementById('modalMeta').textContent =
                 `Ticket #${t.ticket_id} | Registrado por: ${t.agente_nombre}`;
 
@@ -1925,7 +1924,7 @@
                 document.getElementById('fTipoTicket').disabled = ro;
             }
             // El usuario 2 siempre puede editar caja/puerto (se llena después con datos del técnico)
-            document.getElementById('fCajaPuerto').readOnly = (ro && USUARIO_ID !== 2);
+            document.getElementById('fCajaPuerto').readOnly = (ro && ROL_ID !== 9);
         }
 
         function resetModal() {
