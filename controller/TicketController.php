@@ -28,7 +28,7 @@ class TicketController
 
         // Validar el tipo de ticket asegurando que si no es el usuario 2, forzosamente sea 1.
         $tipo_ticket = isset($body['tipo_ticket']) ? (int) $body['tipo_ticket'] : 1;
-        $puedeCrearTipo2 = ((int) $usuario['rol_id'] === 9 || (int) $usuario['rol_id'] === 6 || (int) $usuario['rol_id'] === 7);
+        $puedeCrearTipo2 = ((int) $usuario['rol_id'] === 9);
         if ($tipo_ticket === 2 && !$puedeCrearTipo2) {
             $tipo_ticket = 1;
         }

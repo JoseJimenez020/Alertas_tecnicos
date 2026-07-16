@@ -1255,10 +1255,8 @@
                 <textarea id="fDescripcion" maxlength="255" placeholder="Describe el incidente..."></textarea>
 
                 <?php if ($rolId === 9): ?>
-                    <label>Tipo de Ticket</label>
-                    <select id="fTipoTicket" onchange="toggleCamposEspeciales()">
-                        <option value="2">Retiro de equipo</option>
-                    </select>
+                    <!-- Rol 9: único que crea tipo 2 (Retiro de equipo). Sin selector, valor forzado. -->
+                    <input type="hidden" id="fTipoTicket" value="2">
                 <?php elseif ($rolId === 8): ?>
                     <label>Tipo de Ticket</label>
                     <select id="fTipoTicket" onchange="toggleCamposEspeciales()">
@@ -1516,7 +1514,7 @@
             openModal('modalOverlay');
 
             if (document.getElementById('fTipoTicket')) {
-                document.getElementById('fTipoTicket').value = '1';
+                document.getElementById('fTipoTicket').value = (ROL_ID === 9) ? '2' : '1';
             }
             document.getElementById('fCajaPuerto').value = '';
             toggleCamposEspeciales();
