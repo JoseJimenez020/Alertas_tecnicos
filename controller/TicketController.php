@@ -288,14 +288,22 @@ class TicketController
     {
         $this->requireJson();
         $usuario = $_SESSION['usuario'];
-        if (!in_array($usuario['rol_id'], [1, 2, 3, 4, 6, 7, 8, 9]))
+        if (!in_array($usuario['rol_id'], [1, 2, 3, 4, 6, 7]))
             $this->jsonError('Sin permisos.', 403);
 
         $body = $this->jsonBody();
         $ticketId = (int) ($body['ticket_id'] ?? 0);
         $noLlamada = (int) ($body['no_llamada'] ?? 0);
-        if (!$ticketId || $noLlamada < 1 || $noLlamada > 4)   // ← 4 ahora es válido
+        if (!$ticketId || $noLlamada < 1 || $noLlamada > 4)
             $this->jsonError('Datos inválidos.', 422);
+
+        $respuestaTecnico = trim($body['respuesta_tecnico'] ?? '');
+        $respuestaCliente = trim($body['respuesta_cliente'] ?? '');
+
+        // No permitir guardar llamadas completamente vacías (aplica también a Calidad)
+        if ($respuestaTecnico === '' && $respuestaCliente === '') {
+            $this->jsonError('Debes ingresar al menos una respuesta antes de guardar.', 422);
+        }
 
         $ticketModel = new TicketModel();
         if (!$ticketModel->findById($ticketId))
@@ -305,9 +313,9 @@ class TicketController
         $llamadaModel->upsert(
             $ticketId,
             $noLlamada,
-            trim($body['respuesta_tecnico'] ?? ''),
-            trim($body['respuesta_cliente'] ?? ''),
-            (int) ($body['es_calidad'] ?? 0)          // ← nuevo campo
+            $respuestaTecnico,
+            $respuestaCliente,
+            (int) ($body['es_calidad'] ?? 0)
         );
         WsNotifier::send('ticket.changed', ['fecha' => date('Y-m-d')]);
         $this->jsonSuccess(['saved' => true]);

@@ -1496,6 +1496,43 @@
             else if (canCreate) openCreateMode(cell);
         }
 
+        function actualizarEstadoLlamada(n, tecnicoVal, clienteVal, yaGuardada) {
+            const inputTecnico = document.getElementById(`lTecnico${n}`);
+            const inputCliente = document.getElementById(`lCliente${n}`);
+            const bloque = document.getElementById(`llamadaBloque${n}`);
+            const status = document.getElementById(`lStatus${n}`);
+            const btnSave = bloque.querySelector('.btn-save-llamada');
+
+            // Si no existe el campo técnico (llamada de Calidad), se considera "completo" en ese campo
+            const tecnicoListo = inputTecnico ? (tecnicoVal || '').trim() !== '' : true;
+            const clienteListo = (clienteVal || '').trim() !== '';
+
+            if (inputTecnico) {
+                if (tecnicoListo) inputTecnico.setAttribute('readonly', true);
+                else inputTecnico.removeAttribute('readonly');
+            }
+            if (clienteListo) inputCliente.setAttribute('readonly', true);
+            else inputCliente.removeAttribute('readonly');
+
+            const completo = tecnicoListo && clienteListo;
+
+            if (completo) {
+                bloque.classList.add('llamada-guardada');
+                status.textContent = '✓ Guardada';
+                status.style.color = '#155724';
+                if (btnSave) btnSave.style.display = 'none';
+            } else if (yaGuardada) {
+                bloque.classList.remove('llamada-guardada');
+                status.textContent = inputTecnico ? 'En espera de respuesta del cliente.' : '';
+                status.style.color = '#856404';
+                if (btnSave) btnSave.style.display = 'inline-block';
+            } else {
+                bloque.classList.remove('llamada-guardada');
+                status.textContent = '';
+                if (btnSave) btnSave.style.display = 'inline-block';
+            }
+        }
+
         function openCreateMode(cell) {
             resetModal();
             document.getElementById('modalTitle').textContent = 'Registrar Ticket';
@@ -1563,26 +1600,11 @@
                     const ll = (t.llamadas && t.llamadas[n]) || {};
                     const inputTecnico = document.getElementById(`lTecnico${n}`);
                     const inputCliente = document.getElementById(`lCliente${n}`);
-                    const bloque = document.getElementById(`llamadaBloque${n}`);
-                    const status = document.getElementById(`lStatus${n}`);
-                    const btnSave = bloque.querySelector('.btn-save-llamada');
 
                     if (inputTecnico) inputTecnico.value = ll.respuesta_tecnico || '';
                     inputCliente.value = ll.respuesta_cliente || '';
 
-                    if (ll.llamada_id) {
-                        bloque.classList.add('llamada-guardada');
-                        status.textContent = '✓ Guardada'; status.style.color = '#155724';
-                        if (inputTecnico) { inputTecnico.setAttribute('readonly', true); }
-                        inputCliente.setAttribute('readonly', true);
-                        if (btnSave) btnSave.style.display = 'none';
-                    } else {
-                        bloque.classList.remove('llamada-guardada');
-                        status.textContent = '';
-                        if (inputTecnico) { inputTecnico.removeAttribute('readonly'); }
-                        inputCliente.removeAttribute('readonly');
-                        if (btnSave) btnSave.style.display = 'inline-block';
-                    }
+                    actualizarEstadoLlamada(n, ll.respuesta_tecnico || '', ll.respuesta_cliente || '', !!ll.llamada_id);
                 }
             } else {
                 document.getElementById('llamadasSection').style.display = 'block';
@@ -1590,26 +1612,11 @@
                     const ll = (t.llamadas && t.llamadas[n]) || {};
                     const inputTecnico = document.getElementById(`lTecnico${n}`);
                     const inputCliente = document.getElementById(`lCliente${n}`);
-                    const bloque = document.getElementById(`llamadaBloque${n}`);
-                    const status = document.getElementById(`lStatus${n}`);
-                    const btnSave = bloque.querySelector('.btn-save-llamada');
 
                     if (inputTecnico) inputTecnico.value = ll.respuesta_tecnico || '';
                     inputCliente.value = ll.respuesta_cliente || '';
 
-                    if (ll.llamada_id) {
-                        bloque.classList.add('llamada-guardada');
-                        status.textContent = '✓ Guardada'; status.style.color = '#155724';
-                        if (inputTecnico) { inputTecnico.setAttribute('readonly', true); }
-                        inputCliente.setAttribute('readonly', true);
-                        if (btnSave) btnSave.style.display = 'none';
-                    } else {
-                        bloque.classList.remove('llamada-guardada');
-                        status.textContent = '';
-                        if (inputTecnico) { inputTecnico.removeAttribute('readonly'); }
-                        inputCliente.removeAttribute('readonly');
-                        if (btnSave) btnSave.style.display = 'inline-block';
-                    }
+                    actualizarEstadoLlamada(n, ll.respuesta_tecnico || '', ll.respuesta_cliente || '', !!ll.llamada_id);
                 }
             }
 
@@ -1870,23 +1877,35 @@
             if (!ticketId) return;
 
             const tecnicoField = document.getElementById(`lTecnico${n}`);
+            const respuestaTecnico = tecnicoField ? tecnicoField.value.trim() : '';
+            const respuestaCliente = document.getElementById(`lCliente${n}`).value.trim();
+
+            if (!respuestaTecnico && !respuestaCliente) {
+                const st = document.getElementById(`lStatus${n}`);
+                st.textContent = 'Escribe una respuesta antes de guardar.';
+                st.style.color = '#c0392b';
+                return;
+            }
+
             const payload = {
                 ticket_id: ticketId,
                 no_llamada: n,
-                respuesta_tecnico: tecnicoField ? tecnicoField.value.trim() : '',
-                respuesta_cliente: document.getElementById(`lCliente${n}`).value.trim(),
+                respuesta_tecnico: respuestaTecnico,
+                respuesta_cliente: respuestaCliente,
                 es_calidad: (n === 4) ? 1 : 0,
             };
             const res = await fetch(`${BASE_URL}?action=llamada.upsert`, {
                 method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
             });
             const json = await res.json();
-            const st = document.getElementById(`lStatus${n}`);
+
             if (json.success) {
-                document.getElementById(`llamadaBloque${n}`).classList.add('llamada-guardada');
-                st.textContent = '✓ Guardada'; st.style.color = '#155724';
-                syncTablero(); // Sincronizamos silenciosamente para reflejar la marca de calidad en la tabla principal
-            } else { st.textContent = '✗ Error'; st.style.color = '#721c24'; }
+                actualizarEstadoLlamada(n, respuestaTecnico, respuestaCliente, true);
+                syncTablero();
+            } else {
+                const st = document.getElementById(`lStatus${n}`);
+                st.textContent = json.message || '✗ Error'; st.style.color = '#721c24';
+            }
         }
 
         function buildPayload() {
