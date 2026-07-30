@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" href="../../assets/favicon.ico">
     <title>Tablero de Incidentes</title>
+    <script src="<?= BASE_URL ?>public/theme.js"></script>
     <link rel="stylesheet" href="<?= BASE_URL ?>public/main.css">
     <style>
         /* ── Barra superior ─────────────────────────────────────── */
@@ -866,11 +867,192 @@
             line-height: 1;
             z-index: 2;
         }
+
+        /* ══════════════ MODO OSCURO — overrides específicos del tablero ══════════════ */
+        [data-theme="dark"] .modal-box {
+            background: var(--bg-container);
+            color: var(--text-primary);
+        }
+
+        [data-theme="dark"] .modal-body input,
+        [data-theme="dark"] .modal-body select,
+        [data-theme="dark"] .modal-body textarea {
+            background: var(--input-bg);
+            color: var(--text-primary);
+            border-color: var(--border-color);
+        }
+
+        [data-theme="dark"] .modal-body input[readonly],
+        [data-theme="dark"] .modal-body textarea[readonly],
+        [data-theme="dark"] .modal-body select[disabled] {
+            background: #1a1f24;
+            color: #9aa3ab;
+        }
+
+        [data-theme="dark"] .modal-footer {
+            background: #171c21;
+        }
+
+        [data-theme="dark"] .modal-meta {
+            background: #12303f;
+            color: #bcdcee;
+        }
+
+        [data-theme="dark"] .feedback.success {
+            background: #17331f;
+            color: #9be6ac;
+        }
+
+        [data-theme="dark"] .feedback.error {
+            background: #3a1414;
+            color: #f5a3a3;
+        }
+
+        [data-theme="dark"] #liveIndicator {
+            background: #1e242b;
+            border-color: #3a4149;
+            color: #a9b1b8;
+        }
+
+        [data-theme="dark"] #bannerNotif {
+            background: #3a2f0a;
+            border-color: #7a5c00;
+            color: #f0d98a;
+        }
+
+        [data-theme="dark"] .dropdown-menu {
+            background: var(--bg-container);
+            border-color: var(--border-color);
+        }
+
+        [data-theme="dark"] .dropdown-menu a,
+        [data-theme="dark"] .dropdown-menu button.menu-btn {
+            color: var(--text-primary);
+            border-bottom-color: #2a3138;
+        }
+
+        [data-theme="dark"] .dropdown-menu a:hover,
+        [data-theme="dark"] .dropdown-menu button.menu-btn:hover {
+            background: #262c33;
+        }
+
+        [data-theme="dark"] .dropdown-menu .menu-section {
+            background: #171c21;
+            color: #7a838a;
+            border-bottom-color: #2a3138;
+        }
+
+        [data-theme="dark"] .search-dropdown {
+            background: var(--bg-container);
+            border-color: var(--border-color);
+        }
+
+        [data-theme="dark"] .search-result-item {
+            border-bottom-color: #2a3138;
+        }
+
+        [data-theme="dark"] .search-result-item:hover {
+            background: #262c33;
+        }
+
+        [data-theme="dark"] .llamada-bloque {
+            background: #1a2027;
+            border-color: #33404d;
+        }
+
+        [data-theme="dark"] .llamada-guardada {
+            background: #17331f;
+        }
+
+        [data-theme="dark"] #rescheduleResult {
+            background: #12303f;
+            border-color: #2a5c78;
+        }
+
+        [data-theme="dark"] .reagendar-info {
+            background: #12303f;
+        }
+
+        [data-theme="dark"] .hora-check-sm {
+            border-color: var(--border-color);
+            color: var(--text-primary);
+        }
+
+        [data-theme="dark"] .slot-loading,
+        [data-theme="dark"] .search-no-results {
+            color: #8a939b;
+        }
+
+        [data-theme="dark"] .slot-empty {
+            background: #3a1414;
+            border-color: #6b2323;
+            color: #f5a3a3;
+        }
+
+        [data-theme="dark"] tr.inactivo>td:not(.bloqueos-col) {
+            color: #6b7480;
+        }
+
+        [data-theme="dark"] body {
+            background: var(--bg-page);
+        }
+
+        [data-theme="dark"] .login-card {
+            background: var(--bg-container);
+            box-shadow: 0 4px 24px rgba(0, 0, 0, .5);
+        }
+
+        [data-theme="dark"] .login-card-header h2 {
+            color: var(--link-color);
+        }
+
+        [data-theme="dark"] .login-card-header p {
+            color: #8a939b;
+        }
+
+        [data-theme="dark"] .form-group label {
+            color: var(--text-secondary);
+        }
+
+        [data-theme="dark"] .form-group input {
+            background: var(--input-bg);
+            color: var(--text-primary);
+            border-color: var(--border-color);
+        }
+
+        [data-theme="dark"] .pw-toggle {
+            color: #8a939b;
+        }
+
+        [data-theme="dark"] .login-card-footer {
+            background: #171c21;
+            border-top-color: #2a3138;
+            color: #6b7480;
+        }
+
+        [data-theme="dark"] .alert-error {
+            background: #3a1414;
+            border-color: #c0392b;
+            color: #f5a3a3;
+        }
+
+        [data-theme="dark"] .alert-success {
+            background: #17331f;
+            border-color: #3a9e5f;
+            color: #9be6ac;
+        }
+
+        [data-theme="dark"] .alert-info {
+            background: #12303f;
+            border-color: #2e75b6;
+            color: #bcdcee;
+        }
     </style>
 </head>
 
 <body>
-
+    <button class="theme-toggle" data-theme-toggle onclick="toggleTheme()"
+        style="position:fixed; top:14px; right:14px; z-index:10;">🌙 Modo oscuro</button>
     <?php
     function getIconHtml(array $ticket, array $colorMap): string
     {
@@ -984,7 +1166,6 @@
                     </div>
                     <div class="search-dropdown" id="searchDropdownMenu"></div>
                 </div>
-
                 <div class="dropdown" id="menuDropdown">
                     <button class="dropdown-toggle" onclick="toggleMenu(event)">☰ Menú</button>
                     <div class="dropdown-menu" id="dropdownMenu">

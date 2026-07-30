@@ -6,7 +6,8 @@
         <link rel="icon" type="image/png" href="../../assets/favicon.ico">
 
     <title>Acceso — Sistema de Incidentes</title>
-    <link rel="stylesheet" href="<?= BASE_URL ?>public/main.css">
+        <link rel="stylesheet" href="<?= BASE_URL ?>public/main.css">
+    <script src="<?= BASE_URL ?>public/theme.js"></script>
     <style>
         *, *::before, *::after { box-sizing: border-box; }
 
@@ -133,6 +134,8 @@
     </style>
 </head>
 <body>
+    <button class="theme-toggle" data-theme-toggle onclick="toggleTheme()"
+        style="position:fixed; top:14px; right:14px; z-index:10;">🌙 Modo oscuro</button>
 <?php
 // Mensajes de estado por parámetro GET
 $msgParam = $_GET['msg'] ?? '';

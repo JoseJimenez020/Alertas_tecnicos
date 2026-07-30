@@ -7,6 +7,7 @@
     <link rel="icon" type="image/png" href="../../assets/favicon.ico">
     <title>Gestión de Técnicos</title>
     <link rel="stylesheet" href="<?= BASE_URL ?>public/main.css">
+    <script src="<?= BASE_URL ?>public/theme.js"></script>
     <style>
         .badge-no_se_presento {
             background: #f3e5f5;
@@ -415,10 +416,85 @@
             color: #1a4d6d;
             margin-bottom: 10px;
         }
+
+        [data-theme="dark"] .modal-box {
+            background: var(--bg-container);
+            color: var(--text-primary);
+        }
+
+        [data-theme="dark"] .modal-footer {
+            background: #171c21;
+        }
+
+        [data-theme="dark"] .modal-body input,
+        [data-theme="dark"] .modal-body select,
+        [data-theme="dark"] .modal-body textarea {
+            background: var(--input-bg);
+            color: var(--text-primary);
+            border-color: var(--border-color);
+        }
+
+        [data-theme="dark"] .bloqueo-card {
+            background: #1a2027;
+            border-color: #33404d;
+        }
+
+        [data-theme="dark"] .bc-fechas {
+            color: #a9b1b8;
+        }
+
+        [data-theme="dark"] .bc-horas {
+            color: #5ba3d0;
+        }
+
+        [data-theme="dark"] .bc-desc {
+            color: #8a939b;
+        }
+
+        [data-theme="dark"] .hora-check {
+            border-color: var(--border-color);
+            color: var(--text-primary);
+        }
+
+        [data-theme="dark"] .hora-check-todas {
+            background: #12303f;
+            border-color: #2a5c78;
+            color: #bcdcee;
+        }
+
+        [data-theme="dark"] .info-box {
+            background: #12303f;
+            color: #bcdcee;
+        }
+
+        [data-theme="dark"] .feedback.success {
+            background: #17331f;
+            color: #9be6ac;
+        }
+
+        [data-theme="dark"] .feedback.error {
+            background: #3a1414;
+            color: #f5a3a3;
+        }
+
+        [data-theme="dark"] tr.inactivo>td:not(.bloqueos-col) {
+            color: #6b7480;
+        }
+
+        [data-theme="dark"] .btn-secondary {
+            background: #3a4149;
+            color: #e7e9ea;
+        }
+
+        [data-theme="dark"] .btn-secondary:hover {
+            background: #4a5158;
+        }
     </style>
 </head>
 
 <body>
+    <button class="theme-toggle" data-theme-toggle onclick="toggleTheme()"
+        style="position:fixed; top:14px; right:14px; z-index:10;">🌙 Modo oscuro</button>
     <div class="container">
         <div class="topbar">
             <h1>⚙ Gestión de Técnicos</h1>

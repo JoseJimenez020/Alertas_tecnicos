@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" href="../../assets/favicon.ico">
     <title>Almacén — Materiales Utilizados</title>
-    <link rel="stylesheet" href="<?= BASE_URL ?>public/main.css">
+        <link rel="stylesheet" href="<?= BASE_URL ?>public/main.css">
+    <script src="<?= BASE_URL ?>public/theme.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         .topbar {
@@ -83,6 +84,8 @@
     </style>
 </head>
 <body>
+    <button class="theme-toggle" data-theme-toggle onclick="toggleTheme()"
+        style="position:fixed; top:14px; right:14px; z-index:10;">🌙 Modo oscuro</button>
 <div class="container">
 
     <div class="topbar">

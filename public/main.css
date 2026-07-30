@@ -1,9 +1,38 @@
+/* ── Variables de tema ────────────────────────────────────────────── */
+:root {
+    --bg-page: #f4f4f4;
+    --bg-container: #ffffff;
+    --text-primary: #222;
+    --text-secondary: #555;
+    --border-color: #ccc;
+    --table-border: #ccc;
+    --table-stripe: #f5f5f5;
+    --shadow-color: rgba(0,0,0,0.1);
+    --link-color: #1a4d6d;
+    --input-bg: #ffffff;
+}
+
+[data-theme="dark"] {
+    --bg-page: #14181c;
+    --bg-container: #1e242b;
+    --text-primary: #e7e9ea;
+    --text-secondary: #a9b1b8;
+    --border-color: #3a4149;
+    --table-border: #3a4149;
+    --table-stripe: #262c33;
+    --shadow-color: rgba(0,0,0,0.45);
+    --link-color: #5ba3d0;
+    --input-bg: #262c33;
+}
+
 /* ── Base ──────────────────────────────────────────────────────────── */
 body {
     font-family: Arial, sans-serif;
     font-size: 12px;
     margin: 20px;
-    background-color: #f4f4f4;
+    background-color: var(--bg-page);
+    color: var(--text-primary);
+    transition: background-color .15s, color .15s;
 }
 
 h1 {
@@ -13,9 +42,9 @@ h1 {
 }
 
 .container {
-    background-color: white;
+    background-color: var(--bg-container);
     padding: 20px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    box-shadow: 0 0 10px var(--shadow-color);
     overflow-x: auto;
 }
 
@@ -28,21 +57,27 @@ table {
 }
 
 th, td {
-    border: 1px solid #ccc;
+    border: 1px solid var(--table-border);
     padding: 4px;
     height: 25px;
     min-width: 30px;
 }
 
-/* Cabeceras de Regiones */
-.h-centro    { background-color: #87CEEB; }
-.h-chontalpa { background-color: #90EE90; }
-.h-sierra    { background-color: #FFDAB9; }
-.h-carmen    { background-color: #FFFF00; }
-.h-delicias  { background-color: #DA70D6; }
-.h-norte     { background-color: #DA70D6; }
-.h-allende   { background-color: #FFD700; }
-.h-merida    { background-color: #FFA07A; }
+/* Inputs/selects genéricos heredan el tema si no tienen estilo propio */
+input, select, textarea {
+    background-color: var(--input-bg);
+    color: var(--text-primary);
+}
+
+/* Cabeceras de Regiones — siempre texto oscuro, son colores saturados fijos */
+.h-centro    { background-color: #87CEEB; color:#111; }
+.h-chontalpa { background-color: #90EE90; color:#111; }
+.h-sierra    { background-color: #FFDAB9; color:#111; }
+.h-carmen    { background-color: #FFFF00; color:#111; }
+.h-delicias  { background-color: #DA70D6; color:#111; }
+.h-norte     { background-color: #DA70D6; color:#111; }
+.h-allende   { background-color: #FFD700; color:#111; }
+.h-merida    { background-color: #FFA07A; color:#111; }
 
 /* ── Íconos ─────────────────────────────────────────────────────────── */
 .square {
@@ -58,7 +93,7 @@ th, td {
     border: 1px solid #555;
 }
 
-/* ── Paleta de colores de usuario ───────────────────────────────────── */
+/* ── Paleta de colores de usuario (fija en ambos temas) ──────────────── */
 .bg-green       { background-color: #92D050; }
 .bg-yellow      { background-color: #FFFF00; }
 .bg-pink        { background-color: #ff69b4; }
@@ -102,6 +137,10 @@ th, td {
     display: flex;
     align-items: center;
     margin-bottom: 2px;
+    color: var(--text-primary); /* antes: #222 fijo — invisible en modo oscuro para técnicos */
+}
+.list-item[class*="bg-"] {
+    color: #222;
 }
 
 .id-num { width: 25px; font-weight: bold; }
@@ -117,3 +156,20 @@ th, td {
 .cc-lightblue { background-color: #DAE9F8; }
 .cc-m-blue    { background-color: #5bc0de; }
 .cc-purple    { background-color: #D86DCD; }
+
+/* ── Toggle de tema (botón compartido) ───────────────────────────────── */
+.theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    padding: 5px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    font-size: 11px;
+    background: var(--bg-container);
+    color: var(--text-primary);
+    user-select: none;
+    transition: border-color .15s, background-color .15s;
+}
+.theme-toggle:hover { border-color: var(--link-color); }
