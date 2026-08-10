@@ -288,7 +288,7 @@ class TicketController
     {
         $this->requireJson();
         $usuario = $_SESSION['usuario'];
-        if (!in_array($usuario['rol_id'], [1, 2, 3, 4, 6, 7]))
+        if (!in_array($usuario['rol_id'], [1, 2, 3, 4, 6, 7, 8, 9]))
             $this->jsonError('Sin permisos.', 403);
 
         $body = $this->jsonBody();
