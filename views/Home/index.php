@@ -10,6 +10,10 @@
     <link rel="stylesheet" href="<?= BASE_URL ?>public/main.css">
     <style>
         /* ── Barra superior ─────────────────────────────────────── */
+        .zona-divider {
+            border-left: 3px solid #333 !important;
+        }
+
         .topbar {
             display: flex;
             justify-content: space-between;
@@ -1128,6 +1132,21 @@
         $zonaSpans[$z] = ($zonaSpans[$z] ?? 0) + 1;
     }
 
+    // ── Marcar el primer técnico de cada zona (para el divisor visual) ──
+    $zonaStartTecIds = [];
+    $prevZona = null;
+    $primeraZona = true;
+    foreach ($tecnicosSorted as $t) {
+        $z = $t['zona_nombre'] ?? 'Sin zona';
+        if ($z !== $prevZona) {
+            if (!$primeraZona) {
+                $zonaStartTecIds[(int) $t['TecnicoId']] = true;
+            }
+            $primeraZona = false;
+            $prevZona = $z;
+        }
+    }
+
     $allTecsByZona = [];
     foreach ($allTecs as $t) {
         $allTecsByZona[$t['zona_nombre'] ?? 'Sin zona'][] = $t;
@@ -1218,8 +1237,13 @@
             <thead>
                 <tr>
                     <th rowspan="2">Hora</th>
-                    <?php foreach ($zonaSpans as $zonaNombre => $span): ?>
-                        <th colspan="<?= $span ?>" class="h-<?= strtolower(str_replace(' ', '_', $zonaNombre)) ?>">
+                    <?php $iZona = 0;
+                    foreach ($zonaSpans as $zonaNombre => $span):
+                        $iZona++;
+                        $divClassZona = ($iZona > 1) ? ' zona-divider' : '';
+                        ?>
+                        <th colspan="<?= $span ?>"
+                            class="h-<?= strtolower(str_replace(' ', '_', $zonaNombre)) ?><?= $divClassZona ?>">
                             <?= htmlspecialchars($zonaNombre) ?>
                         </th>
                     <?php endforeach; ?>
@@ -1243,6 +1267,7 @@
                         }
 
                         $thClass = $bloqueadoTotal ? 'col-nodisponible' : '';
+                        $thClass .= isset($zonaStartTecIds[$tecId_h]) ? ' zona-divider' : '';
 
                         // Etiqueta de motivo desde el bloqueo activo en la fecha del tablero
                         $motivoLabel = '';
@@ -1281,12 +1306,14 @@
                             $ticket = $tickets[$tecId][$hId] ?? null;
                             $hasTicket = $ticket !== null;
 
+                           $divClassCelda = isset($zonaStartTecIds[$tecId]) ? ' zona-divider' : '';
+
                             if ($celdaBloqueada):
-                                echo '<td class="cell-nodisponible"></td>';
+                                echo '<td class="cell-nodisponible' . $divClassCelda . '"></td>';
                                 continue;
                             endif;
 
-                            $cellClass = 'cell-ticket' . ($hasTicket ? ' occupied' : '');
+                            $cellClass = 'cell-ticket' . ($hasTicket ? ' occupied' : '') . $divClassCelda;
                             if ($hasTicket) {
                                 $numLlamadas = (int) ($ticket['total_llamadas'] ?? 0);
                                 if (($ticket['estado'] ?? '') === 'terminado') {
